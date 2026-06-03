@@ -36,9 +36,9 @@ export const metadata: Metadata = {
     images: ["/symbio-hero-world-radar.png"],
   },
   icons: {
-    icon: "/symbio-logo.svg",
-    shortcut: "/symbio-logo.svg",
-    apple: "/symbio-logo.svg",
+    icon: "/symbio-logo.png",
+    shortcut: "/symbio-logo.png",
+    apple: "/symbio-logo.png",
   },
 };
 
