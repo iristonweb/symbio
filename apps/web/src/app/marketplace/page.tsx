@@ -3,6 +3,9 @@
 import Link from "next/link";
 import * as React from "react";
 import { platformApi, fetchApi, type ApiMarketplaceProduct } from "@/lib/platform-api";
+import { useLocale } from "@/components/LocaleProvider";
+import { PageHero } from "@/components/ui/PageHero";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
@@ -12,6 +15,7 @@ import { GlowCard } from "@/components/immersive/GlowCard";
 const TYPES = ["", "mod", "addon", "resource_pack", "plugin", "service"];
 
 export default function MarketplacePage() {
+  const { t } = useLocale();
   const [items, setItems] = React.useState<ApiMarketplaceProduct[]>([]);
   const [q, setQ] = React.useState("");
   const [type, setType] = React.useState("");
@@ -40,58 +44,61 @@ export default function MarketplacePage() {
       await fetchApi(`/marketplace/cart/items/${id}`, { method: "POST" });
       const cart = await platformApi.cart();
       setCartCount(cart.items.length);
-      setToast("Добавлено в корзину");
+      setToast(t.marketplace.addedToCart);
       window.setTimeout(() => setToast(null), 2200);
     } catch {
-      setToast("Войдите, чтобы добавить товар");
+      setToast(t.marketplace.signInToCart);
       window.setTimeout(() => setToast(null), 2200);
     }
   };
 
   return (
     <div className="space-y-10 pb-14">
-      <section className="holo-panel rounded-[2.5rem] p-8">
-        <Badge tone="info">SYMBIO Marketplace</Badge>
-        <h1 className="mt-4 text-4xl font-semibold">
-          Моды, аддоны и <span className="text-gradient">дополнения</span>
-        </h1>
-        <p className="mt-3 max-w-2xl text-fg-muted">
-          Покупайте контент от verified creators. Продажи, лицензии и библиотека — в одной экосистеме.
-        </p>
-        <div className="mt-6 flex flex-wrap gap-3">
+      <PageHero badge={t.marketplace.badge} title={t.marketplace.title} titleAccent={t.marketplace.titleAccent} subtitle={t.marketplace.subtitle}>
+        <div className="flex flex-wrap gap-3">
           <Link href="/marketplace/cart">
-            <Button variant="premium">Корзина{cartCount > 0 ? ` · ${cartCount}` : ""}</Button>
+            <Button variant="premium">
+              {t.marketplace.cart}
+              {cartCount > 0 ? ` · ${cartCount}` : ""}
+            </Button>
           </Link>
           <Link href="/marketplace/library">
-            <Button variant="secondary">Моя библиотека</Button>
+            <Button variant="secondary">{t.marketplace.library}</Button>
           </Link>
           <Link href="/marketplace/compatibility">
-            <Button variant="outline">Compatibility Graph</Button>
+            <Button variant="outline">{t.marketplace.compatibility}</Button>
           </Link>
         </div>
-      </section>
+      </PageHero>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <Input
-          placeholder="Поиск модов…"
+          placeholder={t.marketplace.searchPlaceholder}
           value={q}
           onChange={(e) => setQ(e.target.value)}
           className="max-w-md"
         />
         <Button variant="outline" onClick={load}>
-          Найти
+          {t.marketplace.search}
         </Button>
       </div>
       <div className="flex flex-wrap gap-2">
-        {TYPES.map((t) => (
-          <Chip key={t || "all"} active={type === t} onClick={() => setType(t)}>
-            {t || "Все"}
+        {TYPES.map((typeId) => (
+          <Chip key={typeId || "all"} active={type === typeId} onClick={() => setType(typeId)}>
+            {typeId || t.marketplace.typeAll}
           </Chip>
         ))}
       </div>
 
       {loading ? (
-        <p className="text-fg-muted">Загрузка…</p>
+        <p className="text-fg-muted">{t.common.loading}</p>
+      ) : items.length === 0 ? (
+        <EmptyState
+          title={t.marketplace.emptyTitle}
+          description={t.marketplace.emptyDesc}
+          actionLabel={t.marketplace.emptyAction}
+          actionHref="/studio"
+        />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
@@ -106,7 +113,7 @@ export default function MarketplacePage() {
                   {item.game_slug ? <Badge tone="neutral">{item.game_slug}</Badge> : null}
                 </div>
                 <div className="absolute bottom-3 right-3 rounded-full border border-accent/30 bg-black/55 px-3 py-1 text-[11px] text-accent backdrop-blur-xl">
-                  verified creator
+                  {t.marketplace.verified}
                 </div>
               </div>
               <h2 className="mt-3 text-lg font-semibold">
@@ -123,17 +130,19 @@ export default function MarketplacePage() {
                 ))}
               </div>
               <p className="mt-4 text-2xl font-semibold text-gradient">
-                {item.is_free ? "Бесплатно" : `${item.price_rub} ₽`}
+                {item.is_free ? t.marketplace.free : `${item.price_rub} ₽`}
               </p>
-              <p className="mt-1 text-xs text-fg-muted">★ {item.rating_avg.toFixed(1)} · {item.sales_count} продаж</p>
+              <p className="mt-1 text-xs text-fg-muted">
+                ★ {item.rating_avg.toFixed(1)} · {item.sales_count} {t.marketplace.sales}
+              </p>
               <div className="mt-4 flex gap-2">
                 <Link href={`/marketplace/${item.slug}`}>
                   <Button size="sm" variant="outline">
-                    Открыть
+                    {t.marketplace.open}
                   </Button>
                 </Link>
                 <Button size="sm" onClick={() => addToCart(item.id)}>
-                  В корзину
+                  {t.marketplace.addToCart}
                 </Button>
               </div>
             </GlowCard>

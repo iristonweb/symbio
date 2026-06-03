@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { platformApi, type ApiGame, type ApiServer } from "@/lib/platform-api";
 import { useLocale } from "@/components/LocaleProvider";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 
@@ -63,7 +64,16 @@ export default function GameDetailPage() {
               ) : null}
             </Link>
           ))}
-          {servers.length === 0 ? <p className="text-fg-muted">{t.common.noResults}</p> : null}
+          {servers.length === 0 ? (
+            <div className="lg:col-span-2">
+              <EmptyState
+                title={t.games.noServersTitle}
+                description={t.games.noServersDesc}
+                actionLabel={t.studio.addServer}
+                actionHref="/studio"
+              />
+            </div>
+          ) : null}
         </div>
       </section>
     </div>

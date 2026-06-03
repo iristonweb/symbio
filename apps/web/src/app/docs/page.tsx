@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useLocale } from "@/components/LocaleProvider";
 import { GlowCard } from "@/components/immersive/GlowCard";
+import { PageHero } from "@/components/ui/PageHero";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 
@@ -11,47 +13,42 @@ const ENDPOINTS = [
   ["API Swagger", "http://127.0.0.1:8000/docs"],
   ["Meilisearch", "http://localhost:7700"],
   ["MinIO Console", "http://localhost:9011"],
-  ["Postgres", "localhost:5432"],
+  ["Postgres", "localhost:5435"],
   ["Redis", "localhost:6379"],
 ];
 
 const ROADMAP = [
-  "Marketplace product pages + compatibility filters",
-  "Server pack publishing + verification flows",
-  "Creator Studio upload & release pipeline",
-  "Client v0: install/update/rollback skeleton",
-  "Trust & Safety: rate limits, audit trail, signed URLs",
+  "Marketplace: compatibility filters и публикация server packs",
+  "Studio: upload pipeline и релизы версий",
+  "Client v0: install / update / rollback",
+  "Trust & Safety: rate limits, signed URLs, расширенный audit",
+  "Импорт WARGM: только публичные метаданные, без копирования контента",
 ];
 
 export default function DocsPage() {
+  const { t } = useLocale();
+
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-10 pb-12">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-        <Badge tone="info">
-          <span className="text-gradient font-semibold tracking-[0.12em]">DOCS</span>
-        </Badge>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-          Project <span className="text-gradient">notes</span>
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm text-fg-muted">
-          Quick links for local dev and roadmap snapshot.
-        </p>
-        <div className="mt-4 flex gap-2">
-          <Link href="/admin/audit">
-            <Button variant="outline" size="sm">
-              Audit
-            </Button>
-          </Link>
-          <Link href="/servers">
-            <Button size="sm">Servers</Button>
-          </Link>
-        </div>
+        <PageHero badge={t.docs.badge} title={t.docs.title} titleAccent={t.docs.titleAccent} subtitle={t.docs.subtitle}>
+          <div className="flex gap-2">
+            <Link href="/admin/audit">
+              <Button variant="outline" size="sm">
+                {t.docs.audit}
+              </Button>
+            </Link>
+            <Link href="/servers">
+              <Button size="sm">{t.docs.servers}</Button>
+            </Link>
+          </div>
+        </PageHero>
       </motion.div>
 
       <div className="grid gap-4 lg:grid-cols-12">
         <GlowCard className="lg:col-span-7 p-6">
-          <div className="text-xs text-fg-muted">Local endpoints</div>
-          <div className="mt-1 text-lg font-semibold">Where to click</div>
+          <div className="text-xs text-fg-muted">{t.docs.endpoints}</div>
+          <div className="mt-1 text-lg font-semibold">{t.docs.endpointsTitle}</div>
           <div className="mt-4 space-y-2">
             {ENDPOINTS.map(([k, v]) => (
               <div
@@ -59,16 +56,16 @@ export default function DocsPage() {
                 className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm"
               >
                 <span className="text-fg">{k}</span>
-                <span className="text-xs text-fg-muted font-mono">{v}</span>
+                <span className="font-mono text-xs text-fg-muted">{v}</span>
               </div>
             ))}
           </div>
         </GlowCard>
 
         <GlowCard className="lg:col-span-5 p-6">
-          <div className="text-xs text-fg-muted">Roadmap snapshot</div>
-          <div className="mt-1 text-lg font-semibold">Next steps</div>
-          <ul className="mt-4 space-y-2 text-sm text-fg-muted list-disc pl-5">
+          <div className="text-xs text-fg-muted">{t.docs.roadmap}</div>
+          <div className="mt-1 text-lg font-semibold">{t.docs.roadmapTitle}</div>
+          <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-fg-muted">
             {ROADMAP.map((item) => (
               <li key={item}>{item}</li>
             ))}
@@ -76,12 +73,20 @@ export default function DocsPage() {
         </GlowCard>
 
         <GlowCard className="lg:col-span-12 p-6">
-          <div className="text-xs text-fg-muted">Dev tips</div>
-          <div className="mt-1 text-lg font-semibold">Windows stability</div>
-          <p className="mt-2 text-sm leading-7 text-fg-muted">
-            If DB init fails on Windows, run scripts from WSL2 or ensure Docker containers are
-            healthy. WebGL hero falls back to CSS aurora when reduced motion is enabled.
-          </p>
+          <Badge tone="info">{t.docs.devTips}</Badge>
+          <div className="mt-2 text-lg font-semibold">{t.docs.devTipsTitle}</div>
+          <p className="mt-2 text-sm leading-7 text-fg-muted">{t.docs.devTipsBody}</p>
+          <div className="mt-4 flex flex-wrap gap-3 text-sm">
+            <Link href="/guides" className="text-primary hover:underline">
+              {t.nav.guides}
+            </Link>
+            <Link href="/studio" className="text-primary hover:underline">
+              {t.nav.studio}
+            </Link>
+            <Link href="/billing" className="text-primary hover:underline">
+              {t.nav.billing}
+            </Link>
+          </div>
         </GlowCard>
       </div>
     </div>

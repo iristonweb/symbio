@@ -64,10 +64,7 @@ export default function BillingPage() {
         <h1 className="mt-4 text-4xl font-semibold">
           {t.billing.title} <span className="text-gradient">{t.billing.titleAccent}</span>
         </h1>
-        <p className="mt-3 text-fg-muted">
-          Тарифы в RUB для игроков, владельцев серверов и creators. Подписки управляют лимитами,
-          промо-кредитами, комиссией и доступом к growth-инструментам.
-        </p>
+        <p className="mt-3 text-fg-muted">{t.billing.subtitle}</p>
         <div className="mt-5 flex flex-wrap gap-2 text-xs text-fg-muted">
           <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1">Защищённая лицензия</span>
           <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1">RUB invoices</span>

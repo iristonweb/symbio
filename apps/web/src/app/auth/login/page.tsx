@@ -17,7 +17,7 @@ export default function LoginPage() {
   const { setAuthToken } = useAuth();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-  const [email, setEmail] = React.useState("admin@symbio.local");
+  const [email, setEmail] = React.useState("admin@symbio.dev");
   const [password, setPassword] = React.useState("admin123");
   const [error, setError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
@@ -35,8 +35,8 @@ export default function LoginPage() {
     try {
       const res = await fetch(`${apiUrl}/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ username: email, password }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: email, password }),
       });
       if (!res.ok) throw new Error((await res.text()) || t.auth.loginFailed);
       const data = await res.json();

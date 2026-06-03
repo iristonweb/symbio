@@ -3,6 +3,7 @@
 import Link from "next/link";
 import * as React from "react";
 import { fetchApi } from "@/lib/platform-api";
+import { useLocale } from "@/components/LocaleProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { MetricCapsule } from "@/components/immersive/OrganismPanel";
@@ -15,6 +16,7 @@ type Copilot = {
 };
 
 export default function AdminDashboardPage() {
+  const { t } = useLocale();
   const [data, setData] = React.useState<Copilot | null>(null);
 
   React.useEffect(() => {
@@ -28,20 +30,20 @@ export default function AdminDashboardPage() {
       <section className="banner-control relative overflow-hidden rounded-[2.7rem] border border-white/10 p-6 sm:p-10">
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,5,13,0.9),rgba(3,5,13,0.48),rgba(3,5,13,0.86))]" />
         <div className="relative max-w-3xl">
-          <Badge tone="info">owner command</Badge>
+          <Badge tone="info">{t.admin.dashboardBadge}</Badge>
           <h1 className="mt-4 text-5xl font-semibold leading-none tracking-tight sm:text-7xl">
-            Grow a server like a <span className="text-gradient">living economy.</span>
+            {t.admin.dashboardTitle} <span className="text-gradient">{t.admin.dashboardTitleAccent}</span>
           </h1>
-          <p className="mt-5 text-base leading-8 text-fg-muted">
-            Monitor conversion, retention, vote velocity, activity heatmaps, community pressure and
-            profile performance from one cinematic control room.
-          </p>
+          <p className="mt-5 text-base leading-8 text-fg-muted">{t.admin.dashboardSubtitle}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/studio">
-              <Button>Add server</Button>
+              <Button>{t.admin.addServer}</Button>
             </Link>
             <Link href="/admin/audit">
-              <Button variant="outline">Audit log</Button>
+              <Button variant="outline">{t.admin.auditLog}</Button>
+            </Link>
+            <Link href="/admin/imports">
+              <Button variant="ghost">{t.admin.importTitle}</Button>
             </Link>
           </div>
         </div>
@@ -75,7 +77,7 @@ export default function AdminDashboardPage() {
                 </div>
               </Link>
             ))}
-            {!data?.servers?.length ? <p className="text-sm text-fg-muted">No server data yet.</p> : null}
+            {!data?.servers?.length ? <p className="text-sm text-fg-muted">{t.admin.noServerData}</p> : null}
           </div>
         </div>
 
@@ -110,7 +112,7 @@ export default function AdminDashboardPage() {
         {!data ? (
           <div className="holo-panel rounded-[2rem] p-6 lg:col-span-3">
             <Badge tone="info">copilot</Badge>
-            <p className="mt-4 text-sm text-fg-muted">Waiting for live ecosystem data.</p>
+            <p className="mt-4 text-sm text-fg-muted">{t.admin.noServerData}</p>
           </div>
         ) : null}
       </section>

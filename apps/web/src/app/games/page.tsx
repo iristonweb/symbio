@@ -4,6 +4,8 @@ import * as React from "react";
 import Link from "next/link";
 import { platformApi, type ApiGame } from "@/lib/platform-api";
 import { useLocale } from "@/components/LocaleProvider";
+import { PageHero } from "@/components/ui/PageHero";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -33,13 +35,7 @@ export default function GamesPage() {
 
   return (
     <div className="space-y-10 pb-14">
-      <section className="holo-panel rounded-[2.5rem] p-8 sm:p-10">
-        <Badge tone="info">{t.games.badge}</Badge>
-        <h1 className="mt-4 text-5xl font-semibold tracking-tight sm:text-6xl">
-          {t.games.title} <span className="text-gradient">{t.games.titleAccent}</span>
-        </h1>
-        <p className="mt-4 max-w-2xl text-fg-muted">{t.games.subtitle}</p>
-      </section>
+      <PageHero badge={t.games.badge} title={t.games.title} titleAccent={t.games.titleAccent} subtitle={t.games.subtitle} />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <Input
@@ -72,6 +68,13 @@ export default function GamesPage() {
             <Skeleton key={i} className="h-40" />
           ))}
         </div>
+      ) : games.length === 0 ? (
+        <EmptyState
+          title={t.games.emptyTitle}
+          description={t.games.emptyDesc}
+          actionLabel={t.games.emptyAction}
+          actionHref="/games"
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {games.map((g) => (

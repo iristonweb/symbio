@@ -14,6 +14,7 @@ from app.db.models.billing import Plan, Wallet
 from app.db.models.billing_extended import CommissionRule
 from app.db.models.user import User
 from app.db.models.marketplace import MarketplaceProduct, ProductVersion
+from app.core.security import hash_password
 
 
 GENRES = [
@@ -89,10 +90,128 @@ PLANS = [
 ]
 
 MARKETPLACE_DEMO = [
-    {"slug": "dayz-hardcore-ui", "title": "DayZ Hardcore UI Pack", "product_type": "mod", "game_slug": "dayz", "price_rub": 349, "tags": ["ui", "hardcore"]},
-    {"slug": "rust-base-blueprint", "title": "Rust Base Blueprint Collection", "product_type": "addon", "game_slug": "rust", "price_rub": 499, "tags": ["building"]},
-    {"slug": "arma-tactical-ops", "title": "ARMA Tactical Ops Mod", "product_type": "mod", "game_slug": "arma-3", "price_rub": 0, "is_free": True, "tags": ["milsim"]},
-    {"slug": "minecraft-symbio-pack", "title": "SYMBIO Minecraft Texture Pack", "product_type": "resource_pack", "game_slug": "minecraft", "price_rub": 199, "tags": ["textures"]},
+    {
+        "slug": "dayz-hardcore-ui",
+        "title": "DayZ Hardcore UI Pack",
+        "product_type": "mod",
+        "game_slug": "dayz",
+        "price_rub": 349,
+        "tags": ["ui", "hardcore"],
+        "short_description": "Минималистичный HUD для хардкор-серверов: онлайн фракций, таймер вайпа, статус ранения.",
+        "description": "Пак заменяет стандартный интерфейс на читаемый в PvP. Совместим с большинством модов экономики. Установка: распаковать в папку миссии, прописать в serverDZ.cfg. Требуется DayZ 1.25+.",
+    },
+    {
+        "slug": "rust-base-blueprint",
+        "title": "Rust Base Blueprint Collection",
+        "product_type": "addon",
+        "game_slug": "rust",
+        "price_rub": 499,
+        "tags": ["building"],
+        "short_description": "50 проверенных схем баз для wipe: от соло до клановых compound.",
+        "description": "Каждая схема с материалами, TC placement и anti-raid notes. Формат: JSON + превью PNG. Подходит для серверов x2–x5.",
+    },
+    {
+        "slug": "arma-tactical-ops",
+        "title": "ARMA Tactical Ops Mod",
+        "product_type": "mod",
+        "game_slug": "arma-3",
+        "price_rub": 0,
+        "is_free": True,
+        "tags": ["milsim"],
+        "short_description": "MilSim-миссии, ACE-совместимые триггеры и баланс отрядов 8–32 игрока.",
+        "description": "Бесплатный мод для сообществ ARMA 3. Включает 12 миссий, Zeus-шаблоны и документацию по настройке dedicated.",
+    },
+    {
+        "slug": "minecraft-symbio-pack",
+        "title": "SYMBIO Minecraft Texture Pack",
+        "product_type": "resource_pack",
+        "game_slug": "minecraft",
+        "price_rub": 199,
+        "tags": ["textures"],
+        "short_description": "Текстуры 32× в стиле SYMBIO для SMP и ивент-серверов.",
+        "description": "Resource pack без optifine-зависимостей. Поддержка 1.20+. Лицензия: одна копия на сервер до 200 слотов.",
+    },
+]
+
+ARTICLES = [
+    {
+        "slug": "welcome-to-symbio",
+        "title": "Запуск SYMBIO: что уже работает",
+        "excerpt": "Радар серверов, маркет, студия владельца и тарифы — краткий обзор для игроков и админов.",
+        "body": """SYMBIO — экосистема для поиска серверов, проектов и контента создателей.
+
+Уже доступно:
+• Радар серверов с онлайн, рейтингом и фильтрами по стилю игры
+• Каталог игр и проектов сообществ
+• Marketplace: моды, аддоны, resource packs с лицензией и библиотекой
+• Студия: создание проекта и сервера (host/port, теги)
+• Тарифы для игроков, владельцев серверов и creators
+
+Для локальной разработки: API на :8000, web на :3000. После init_db появляются demo-сервер и статьи в разделах Новости, Гайды, Промокоды.
+
+Следующий шаг для владельца: /studio → создать проект → добавить сервер → тариф Owner Premium для промо-кредитов.""",
+        "article_type": "news",
+        "tags": ["platform", "launch"],
+    },
+    {
+        "slug": "server-owner-guide",
+        "title": "Гайд владельца: листинг и продвижение сервера",
+        "excerpt": "Проект, сервер, claim, кредиты и аналитика — по шагам без лишней теории.",
+        "body": """1. Войдите и откройте /studio
+2. Создайте проект: название, описание, slug игр через запятую (dayz, rust)
+3. Добавьте сервер: host, port, режим (PvP/PvE), регион
+4. Проверьте карточку на /servers — онлайн подтягивается из снапшотов API
+5. Тарифы (/billing): Owner Premium даёт промо-кредиты и расширенную карточку
+6. Импорт метаданных (/admin/imports): только публичные поля, без копирования текстов
+
+Важно: описание и баннер — ваши; SYMBIO не дублирует чужой контент. Голоса и рейтинг влияют на сортировку в радаре.""",
+        "article_type": "guide",
+        "tags": ["guide", "owner"],
+    },
+    {
+        "slug": "promo-codes-june-2026",
+        "title": "Промокоды — июнь 2026 (подборка)",
+        "excerpt": "Примеры кодов для теста раздела. Проверяйте актуальность на сайте издателя.",
+        "body": """Редакционная подборка (демо):
+
+SYMBIO-DEV — тестовые 100 кредитов на staging (если включён mock billing)
+CREATOR-START — скидка 10% на Creator Pro первый месяц (маркетинг, уточняйте в /billing)
+
+Правила:
+• Один код на аккаунт, если не указано иное
+• Срок действия смотрите в новостях конкретной игры
+• SYMBIO не гарантирует коды сторонних издателей — только агрегирует публичные объявления""",
+        "article_type": "promocode",
+        "tags": ["promo", "june-2026"],
+    },
+    {
+        "slug": "marketplace-creator-guide",
+        "title": "Гайд creator: публикация мода в маркете",
+        "excerpt": "Тип продукта, версии, модерация и комиссия по тарифу.",
+        "body": """1. Роль creator + тариф Creator Free/Pro/Studio (/billing)
+2. /studio → вкладка продукта: название, тип (mod/addon/resource_pack), игра, цена
+3. После модерации (approved) товар виден в /marketplace
+4. Покупатель: корзина → checkout (mock) → /marketplace/library
+5. Комиссия: 15% Free, 10% Pro, 7% Studio — см. планы creator
+
+Загрузка файлов: версия 1.0.0 + changelog. Compatibility Graph строится из зависимостей между продуктами одной игры.""",
+        "article_type": "guide",
+        "tags": ["guide", "creator", "marketplace"],
+    },
+    {
+        "slug": "season-wipe-radar",
+        "title": "Сезон и вайпы: как читать радар",
+        "excerpt": "Фильтры стиля, сезонная шкала на главной и что значит «давление вайпа».",
+        "body": """На главной (/): фильтры Hardcore, MilSim, PvP, SMP — сужают рекомендации в радаре.
+
+Сезонная шкала показывает окна вайпов и ивентов (из ecosystem API или fallback).
+
+На карточке сервера: онлайн/макс, аптайм, место в рейтинге. Подключение: steam://connect или join_url.
+
+Для владельца: следите за rank_delta в снапшотах — резкий минус часто совпадает с вайпом конкурента.""",
+        "article_type": "news",
+        "tags": ["season", "radar"],
+    },
 ]
 
 
@@ -150,7 +269,7 @@ async def seed_platform(db: AsyncSession) -> None:
         project = Project(
             slug="symbio-demo",
             name="SYMBIO Demo Project",
-            description="Demo gaming community with multiple servers.",
+            description="Демо-проект SYMBIO: хардкор DayZ, один сервер для теста радара и студии владельца.",
             game_slugs=["dayz"],
             rating=4.8,
             votes=120,
@@ -170,7 +289,7 @@ async def seed_platform(db: AsyncSession) -> None:
             port=27015,
             region="EU",
             mode="PvP",
-            description="Official SYMBIO demo server for development.",
+            description="Демо-сервер SYMBIO (EU, PvP). Подключение: 127.0.0.1:27015. Используйте для проверки карточки и снапшотов.",
             tags={"featured": True, "pve": False},
             rating=4.9,
             votes=64,
@@ -192,42 +311,16 @@ async def seed_platform(db: AsyncSession) -> None:
             )
         )
 
-    article_count = (await db.execute(select(func.count(Article.id)))).scalar_one()
-    if not article_count or int(article_count) == 0:
-        now = datetime.now(timezone.utc)
-        db.add(
-            Article(
-                slug="welcome-to-symbio",
-                title="Welcome to SYMBIO",
-                excerpt="Discover gaming servers, projects and communities.",
-                body="SYMBIO is your gaming server ecosystem platform.",
-                article_type="news",
-                tags=["platform"],
-                published_at=now,
-            )
-        )
-        db.add(
-            Article(
-                slug="server-owner-guide",
-                title="Server owner guide",
-                excerpt="How to list and promote your server on SYMBIO.",
-                body="Create a project, add servers, claim listings, use credits for promotions.",
-                article_type="guide",
-                tags=["guide"],
-                published_at=now,
-            )
-        )
-        db.add(
-            Article(
-                slug="promo-codes-june-2026",
-                title="Promo codes roundup — June 2026",
-                excerpt="Active promo codes for popular games.",
-                body="Editorial roundup of community-sourced promo codes.",
-                article_type="promocode",
-                tags=["promo"],
-                published_at=now,
-            )
-        )
+    now = datetime.now(timezone.utc)
+    for article_data in ARTICLES:
+        existing = (await db.execute(select(Article).where(Article.slug == article_data["slug"]))).scalar_one_or_none()
+        if existing:
+            for key in ("title", "excerpt", "body", "article_type", "tags"):
+                setattr(existing, key, article_data[key])
+            if not existing.published_at:
+                existing.published_at = now
+        else:
+            db.add(Article(**article_data, published_at=now))
 
     contest_count = (await db.execute(select(func.count(Contest.id)))).scalar_one()
     if not contest_count or int(contest_count) == 0:
@@ -246,8 +339,27 @@ async def seed_platform(db: AsyncSession) -> None:
             )
         )
 
+    admin = (
+        await db.execute(
+            select(User).where(User.email.in_(["admin@symbio.local", "admin@symbio.dev"]))
+        )
+    ).scalar_one_or_none()
+    if admin and admin.email == "admin@symbio.local":
+        admin.email = "admin@symbio.dev"
+    if not admin:
+        admin = User(
+            email="admin@symbio.dev",
+            hashed_password=hash_password("admin123"),
+            nickname="symbio-admin",
+            display_name="SYMBIO Admin",
+            roles=["user", "admin", "moderator", "site_owner", "creator"],
+            email_verified=True,
+        )
+        db.add(admin)
+        await db.flush()
+
     users = (await db.execute(select(User))).scalars().all()
-    creator = users[0] if users else None
+    creator = admin or (users[0] if users else None)
     for user in users:
         wallet = (await db.execute(select(Wallet).where(Wallet.user_id == user.id))).scalar_one_or_none()
         if not wallet:
@@ -257,13 +369,16 @@ async def seed_platform(db: AsyncSession) -> None:
         for item in MARKETPLACE_DEMO:
             exists = (await db.execute(select(MarketplaceProduct).where(MarketplaceProduct.slug == item["slug"]))).scalar_one_or_none()
             if exists:
+                for key in ("title", "short_description", "description", "product_type", "game_slug", "price_rub", "is_free", "tags"):
+                    if key in item:
+                        setattr(exists, key, item[key])
                 continue
             p = MarketplaceProduct(
                 creator_id=creator.id,
                 slug=item["slug"],
                 title=item["title"],
-                short_description=f"Демо-продукт SYMBIO — {item['title']}",
-                description="Полноценный marketplace-контент для запуска платформы.",
+                short_description=item.get("short_description", f"Демо — {item['title']}"),
+                description=item.get("description", "Контент SYMBIO Marketplace для запуска платформы."),
                 product_type=item["product_type"],
                 game_slug=item.get("game_slug"),
                 price_rub=item.get("price_rub", 0),

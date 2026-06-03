@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { platformApi, type ApiProject } from "@/lib/platform-api";
 import { useLocale } from "@/components/LocaleProvider";
+import { PageHero } from "@/components/ui/PageHero";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 
@@ -33,13 +35,7 @@ export default function ProjectsPage() {
 
   return (
     <div className="space-y-10 pb-14">
-      <section className="holo-panel rounded-[2.5rem] p-8">
-        <Badge tone="success">{t.projects.badge}</Badge>
-        <h1 className="mt-4 text-5xl font-semibold">
-          {t.projects.title} <span className="text-gradient">{t.projects.titleAccent}</span>
-        </h1>
-        <p className="mt-4 text-fg-muted">{t.projects.subtitle}</p>
-      </section>
+      <PageHero badge={t.projects.badge} title={t.projects.title} titleAccent={t.projects.titleAccent} subtitle={t.projects.subtitle} />
 
       <div className="flex flex-wrap gap-2">
         {SORT_KEYS.map((s) => (
@@ -60,6 +56,13 @@ export default function ProjectsPage() {
 
       {loading ? (
         <Skeleton className="h-64" />
+      ) : projects.length === 0 ? (
+        <EmptyState
+          title={t.projects.emptyTitle}
+          description={t.projects.emptyDesc}
+          actionLabel={t.projects.emptyAction}
+          actionHref="/studio"
+        />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {projects.map((p) => (

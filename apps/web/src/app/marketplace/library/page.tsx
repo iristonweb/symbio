@@ -3,8 +3,12 @@
 import Link from "next/link";
 import * as React from "react";
 import { platformApi } from "@/lib/platform-api";
+import { useLocale } from "@/components/LocaleProvider";
+import { PageHero } from "@/components/ui/PageHero";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export default function LibraryPage() {
+  const { t } = useLocale();
   const [items, setItems] = React.useState<Awaited<ReturnType<typeof platformApi.library>>["items"]>([]);
 
   React.useEffect(() => {
@@ -12,10 +16,16 @@ export default function LibraryPage() {
   }, []);
 
   return (
-    <div className="space-y-6 pb-14">
-      <h1 className="text-3xl font-semibold">Моя библиотека</h1>
+    <div className="space-y-8 pb-14">
+      <PageHero title={t.marketplace.libraryTitle} subtitle={t.marketplace.libraryEmptyDesc} />
+
       {!items.length ? (
-        <p className="text-fg-muted">Пока пусто.</p>
+        <EmptyState
+          title={t.marketplace.libraryEmpty}
+          description={t.marketplace.libraryEmptyDesc}
+          actionLabel={t.marketplace.libraryToMarket}
+          actionHref="/marketplace"
+        />
       ) : (
         <ul className="grid gap-3 md:grid-cols-2">
           {items.map((i) => (
@@ -23,6 +33,11 @@ export default function LibraryPage() {
               <Link href={`/marketplace/${i.slug}`} className="font-medium hover:text-primary">
                 {i.title}
               </Link>
+              {i.granted_at ? (
+                <p className="mt-1 text-xs text-fg-muted">
+                  {new Date(i.granted_at).toLocaleDateString()}
+                </p>
+              ) : null}
             </li>
           ))}
         </ul>

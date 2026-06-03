@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { platformApi, type ApiProject } from "@/lib/platform-api";
 import { useLocale } from "@/components/LocaleProvider";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 
@@ -54,10 +55,18 @@ export default function ProjectDetailPage() {
             <Link key={s.id} href={`/servers/${s.id}`} className="organism-panel rounded-[2rem] p-5">
               <span className="font-semibold">{s.name}</span>
               <p className="mt-2 text-xs text-fg-muted">
-                {s.snapshot?.online ?? 0}/{s.snapshot?.max_players ?? 0}
+                {s.snapshot?.online ?? 0}/{s.snapshot?.max_players ?? 0} {t.common.players}
               </p>
             </Link>
           ))}
+          {(project.servers ?? []).length === 0 ? (
+            <EmptyState
+              title={t.projects.serversInProject}
+              description={t.projects.noServersDesc}
+              actionLabel={t.studio.addServer}
+              actionHref="/studio"
+            />
+          ) : null}
         </div>
       </section>
     </div>

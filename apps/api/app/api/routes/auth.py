@@ -27,7 +27,8 @@ class RegisterIn(BaseModel):
 
 
 class LoginIn(BaseModel):
-    username: EmailStr
+    # Dev accounts may use .local / reserved TLDs — do not use EmailStr here.
+    username: str = Field(min_length=3, max_length=320)
     password: str
 
 

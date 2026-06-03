@@ -3,6 +3,9 @@
 import Link from "next/link";
 import * as React from "react";
 import { fetchApi } from "@/lib/platform-api";
+import { useLocale } from "@/components/LocaleProvider";
+import { PageHero } from "@/components/ui/PageHero";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -27,6 +30,7 @@ type GraphEdge = {
 };
 
 export default function CompatibilityPage() {
+  const { t } = useLocale();
   const [game, setGame] = React.useState("");
   const [nodes, setNodes] = React.useState<GraphNode[]>([]);
   const [edges, setEdges] = React.useState<GraphEdge[]>([]);
@@ -58,22 +62,19 @@ export default function CompatibilityPage() {
 
   return (
     <div className="space-y-8 pb-14">
-      <section className="holo-panel overflow-hidden rounded-[2.5rem] p-8">
-        <Badge tone="info">Compatibility Graph</Badge>
-        <h1 className="mt-4 text-4xl font-semibold">
-          Граф совместимости <span className="text-gradient">модов и сборок</span>
-        </h1>
-        <p className="mt-3 max-w-2xl text-fg-muted">
-          SYMBIO собирает зависимости, конфликты и confidence-сигналы, чтобы владельцы серверов
-          покупали не файлы, а рабочие сборки.
-        </p>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <Input value={game} onChange={(e) => setGame(e.target.value)} placeholder="game slug: dayz, rust, minecraft..." />
-          <Button onClick={load}>Обновить</Button>
+      <PageHero
+        badge={t.marketplace.badge}
+        title={t.marketplace.compatTitle}
+        titleAccent={t.marketplace.compatTitleAccent}
+        subtitle={t.marketplace.compatSubtitle}
+      >
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Input value={game} onChange={(e) => setGame(e.target.value)} placeholder={t.marketplace.compatPlaceholder} className="max-w-md" />
+          <Button onClick={load}>{t.marketplace.compatRefresh}</Button>
         </div>
-      </section>
+      </PageHero>
 
-      {loading ? <p className="text-fg-muted">Строим граф…</p> : null}
+      {loading ? <p className="text-fg-muted">{t.marketplace.compatLoading}</p> : null}
 
       <section className="grid gap-4 lg:grid-cols-3">
         {nodes.map((node) => {
@@ -113,15 +114,20 @@ export default function CompatibilityPage() {
                       </div>
                     );
                   })}
-                  {!outgoing.length ? <p className="text-xs text-fg-muted">Нет заявленных зависимостей.</p> : null}
+                  {!outgoing.length ? <p className="text-xs text-fg-muted">{t.marketplace.compatNoDeps}</p> : null}
                 </div>
               </div>
             </div>
           );
         })}
         {!nodes.length && !loading ? (
-          <div className="holo-panel rounded-[2rem] p-8 text-fg-muted lg:col-span-3">
-            Пока нет продуктов для графа. Добавьте первые моды в Studio.
+          <div className="lg:col-span-3">
+            <EmptyState
+              title={t.marketplace.compatEmpty}
+              description={t.marketplace.emptyDesc}
+              actionLabel={t.marketplace.emptyAction}
+              actionHref="/studio"
+            />
           </div>
         ) : null}
       </section>

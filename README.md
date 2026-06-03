@@ -17,7 +17,7 @@ docker compose up -d
 ```
 
 Services:
-- Postgres: `localhost:5432` (db `symbio`, user/pass `symbio`)
+- Postgres: `localhost:5435` (db `symbio`, user/pass `symbio`; host port 5435 avoids clash with other local Postgres on 5432)
 - Redis: `localhost:6379`
 - Meilisearch: `http://localhost:7700`
 - MinIO console: `http://localhost:9011` (minioadmin/minioadmin)
@@ -39,7 +39,7 @@ copy ..\..\.env.example .env  # Windows PowerShell: Copy-Item ..\..\.env.example
 # or just set env vars manually
 
 python -m app.db.init_db
-python -m app.scripts.create_admin --email admin@symbio.local --password admin123
+python -m app.scripts.create_admin --email admin@symbio.dev --password admin123
 
 uvicorn app.main:app --reload --port 8000
 ```
@@ -141,6 +141,6 @@ copy ..\..\.env.example .env
 python -m pip install -r requirements.txt
 python -c "import sqlalchemy, asyncpg; print('sqlalchemy', sqlalchemy.__version__)"
 python -m app.db.init_db
-python -m app.scripts.create_admin --email admin@symbio.local --password admin123
+python -m app.scripts.create_admin --email admin@symbio.dev --password admin123
 python -m uvicorn app.main:app --reload --port 8000
 ```

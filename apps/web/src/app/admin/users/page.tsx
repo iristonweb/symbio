@@ -2,7 +2,9 @@
 
 import * as React from "react";
 import { fetchApi } from "@/lib/platform-api";
+import { useLocale } from "@/components/LocaleProvider";
 import { useAuth } from "@/components/AuthProvider";
+import { PageHero } from "@/components/ui/PageHero";
 import { hasRole } from "@/lib/auth";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -18,6 +20,7 @@ type AdminUser = {
 const ALL_ROLES = ["user", "creator", "site_owner", "moderator", "admin"];
 
 export default function AdminUsersPage() {
+  const { t } = useLocale();
   const { user } = useAuth();
   const [items, setItems] = React.useState<AdminUser[]>([]);
 
@@ -27,7 +30,7 @@ export default function AdminUsersPage() {
   }, [user]);
 
   if (!user || !hasRole(user, "admin")) {
-    return <p className="text-fg-muted">Только для администраторов.</p>;
+    return <p className="text-fg-muted">{t.admin.usersOnly}</p>;
   }
 
   const toggleRole = async (u: AdminUser, role: string) => {
@@ -42,7 +45,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6 pb-14">
-      <h1 className="text-3xl font-semibold">Пользователи</h1>
+      <PageHero badge="Admin" title={t.admin.usersTitle} subtitle={t.admin.auditSubtitle} />
       <div className="space-y-4">
         {items.map((u) => (
           <div key={u.id} className="organism-panel rounded-2xl p-4">

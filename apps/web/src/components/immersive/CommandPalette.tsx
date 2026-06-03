@@ -28,6 +28,12 @@ export function CommandPalette() {
     () => [
       { label: t.palette.ecosystem, kbd: "E", href: "/", hint: t.palette.ecosystemHint },
       { label: t.palette.worlds, kbd: "W", href: "/servers", hint: t.palette.worldsHint },
+      { label: t.nav.games, href: "/games", hint: t.games.subtitle },
+      { label: t.nav.marketplace, href: "/marketplace", hint: t.marketplace.subtitle },
+      { label: t.nav.news, href: "/news", hint: t.news.subtitle },
+      { label: t.nav.guides, href: "/guides", hint: t.guides.subtitle },
+      { label: t.nav.contests, href: "/contests", hint: t.contests.subtitle },
+      { label: t.nav.docs, href: "/docs", hint: t.docs.subtitle },
       { label: t.palette.studio, kbd: "A", href: "/studio", hint: t.palette.studioHint },
       { label: t.palette.admin, kbd: "D", href: "/admin/dashboard", hint: t.palette.adminHint },
       { label: t.palette.profile, kbd: "P", href: "/profile", hint: t.palette.profileHint },

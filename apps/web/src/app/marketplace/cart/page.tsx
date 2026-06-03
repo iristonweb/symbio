@@ -3,9 +3,13 @@
 import Link from "next/link";
 import * as React from "react";
 import { platformApi, fetchApi } from "@/lib/platform-api";
+import { useLocale } from "@/components/LocaleProvider";
+import { PageHero } from "@/components/ui/PageHero";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 
 export default function CartPage() {
+  const { t } = useLocale();
   const [cart, setCart] = React.useState<{ items: { id: string; title: string; price_rub: number; is_free: boolean }[]; total_rub: number } | null>(null);
   const [message, setMessage] = React.useState<string | null>(null);
 
@@ -18,46 +22,49 @@ export default function CartPage() {
   const checkout = async () => {
     try {
       await fetchApi("/marketplace/checkout", { method: "POST" });
-      setMessage("Заказ оформлен. Лицензии добавлены в библиотеку.");
+      setMessage(t.marketplace.cartCheckoutOk);
       load();
     } catch {
-      setMessage("Не удалось оформить заказ. Проверьте авторизацию.");
+      setMessage(t.marketplace.cartCheckoutFail);
     }
   };
 
   const removeItem = async (id: string) => {
     await fetchApi(`/marketplace/cart/items/${id}`, { method: "DELETE" });
-    setMessage("Товар удалён из корзины.");
+    setMessage(t.marketplace.cartRemoved);
     load();
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 pb-14">
-      <h1 className="text-3xl font-semibold">Корзина</h1>
+    <div className="mx-auto max-w-2xl space-y-8 pb-14">
+      <PageHero title={t.marketplace.cartTitle} subtitle={t.marketplace.cartEmptyDesc} />
+
       {!cart?.items.length ? (
-        <p className="text-fg-muted">
-          Пусто. <Link href="/marketplace" className="text-primary">В маркет</Link>
-        </p>
+        <EmptyState
+          title={t.marketplace.cartEmpty}
+          description={t.marketplace.cartEmptyDesc}
+          actionLabel={t.marketplace.cartToMarket}
+          actionHref="/marketplace"
+        />
       ) : (
         <>
           <ul className="space-y-3">
             {cart.items.map((i) => (
               <li key={i.id} className="organism-panel flex items-center justify-between gap-4 rounded-2xl px-4 py-3">
-                <div>
-                  <span className="font-medium">{i.title}</span>
-                  <div className="text-xs text-fg-muted">{i.is_free ? "Free license" : "Digital license"}</div>
-                </div>
+                <span className="font-medium">{i.title}</span>
                 <div className="flex items-center gap-3">
-                  <span>{i.is_free ? "Free" : `${i.price_rub} ₽`}</span>
+                  <span>{i.is_free ? t.marketplace.free : `${i.price_rub} ₽`}</span>
                   <Button size="sm" variant="ghost" onClick={() => removeItem(i.id)}>
-                    Убрать
+                    {t.marketplace.cartRemove}
                   </Button>
                 </div>
               </li>
             ))}
           </ul>
-          <p className="text-xl font-semibold">Итого: {cart.total_rub} ₽</p>
-          <Button onClick={checkout}>Оформить заказ</Button>
+          <p className="text-xl font-semibold">
+            {t.marketplace.cartTotal}: {cart.total_rub} ₽
+          </p>
+          <Button onClick={checkout}>{t.marketplace.cartCheckout}</Button>
         </>
       )}
       {message ? <p className="rounded-2xl border border-primary/25 bg-primary/10 p-3 text-sm text-primary">{message}</p> : null}

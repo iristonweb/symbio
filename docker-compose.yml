@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: symbio
       POSTGRES_DB: symbio
     ports:
-      - "5432:5432"
+      - "5435:5432"
     volumes:
       - symbio_pgdata:/var/lib/postgresql/data
 

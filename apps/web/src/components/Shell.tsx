@@ -223,6 +223,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
               {t.footer.tagline}
             </div>
             <div className="flex flex-wrap gap-4 text-sm text-fg-muted">
+              <Link href="/guides" className="hover:text-fg">
+                {t.nav.guides}
+              </Link>
+              <Link href="/promocodes" className="hover:text-fg">
+                {t.nav.promocodes}
+              </Link>
+              <Link href="/contests" className="hover:text-fg">
+                {t.nav.contests}
+              </Link>
+              <Link href="/docs" className="hover:text-fg">
+                {t.nav.docs}
+              </Link>
               <Link href="/marketplace" className="hover:text-fg">
                 {t.nav.marketplace ?? "Маркет"}
               </Link>
