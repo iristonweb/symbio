@@ -233,7 +233,7 @@ const ru = {
     audit: "Аудит",
     auditHint: "События администратора",
   },
-} as const;
+};
 
 const en: typeof ru = {
   brandTagline: "living worlds network",
