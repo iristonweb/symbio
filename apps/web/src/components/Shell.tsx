@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import * as React from "react";
 import { motion } from "framer-motion";
@@ -48,10 +49,13 @@ function Brand() {
       <div className="relative h-14 w-14 shrink-0">
         <div className="absolute -inset-1.5 rounded-full bg-[conic-gradient(from_180deg,rgb(var(--primary)),rgb(var(--violet)),rgb(var(--accent)),rgb(var(--gold)),rgb(var(--primary)))] opacity-85 blur-md" />
         <div className="absolute inset-0 rounded-full border border-white/15 bg-black/60 shadow-[0_0_32px_rgb(var(--primary)_/_0.3)]" />
-        <img
+        <Image
           src="/symbio-logo.svg"
           alt="SYMBIO"
+          width={56}
+          height={56}
           className="relative h-14 w-14 rounded-full object-contain p-0.5 ring-1 ring-white/15"
+          priority
         />
         <div className="pointer-events-none absolute inset-0 rounded-full border border-primary/25 orbit-ring" />
       </div>

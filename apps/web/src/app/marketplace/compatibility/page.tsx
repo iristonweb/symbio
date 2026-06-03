@@ -95,8 +95,8 @@ export default function CompatibilityPage() {
                 </Link>
                 <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-fg-muted sm:grid-cols-3">
                   <span>★ {node.rating.toFixed(1)}</span>
-                  <span>{node.sales} sales</span>
-                  <span>{Math.round(node.confidence * 100)}% trust</span>
+                  <span>{node.sales} {t.marketplace.sales}</span>
+                  <span>{Math.round(node.confidence * 100)}% {t.marketplace.trustShort}</span>
                 </div>
                 <div className="mt-4 h-2 rounded-full bg-white/8">
                   <div

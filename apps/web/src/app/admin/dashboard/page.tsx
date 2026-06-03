@@ -25,6 +25,17 @@ export default function AdminDashboardPage() {
   }, []);
 
   const metrics = data?.metrics ?? { servers: 0, online: 0, avg_load: 0, products: 0, events: 0 };
+  const impactLabels: Record<string, string> = {
+    high: t.admin.impactHigh,
+    medium: t.admin.impactMedium,
+    low: t.admin.impactLow,
+  };
+  const recommendationTypeLabels: Record<string, string> = {
+    server: t.admin.recServer,
+    marketplace: t.admin.recMarketplace,
+    billing: t.admin.recBilling,
+    content: t.admin.recContent,
+  };
 
   return (
     <div className="space-y-10 pb-14">
@@ -51,19 +62,19 @@ export default function AdminDashboardPage() {
       </section>
 
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <MetricCapsule label="servers" value={String(metrics.servers)} hint="tracked worlds" />
-        <MetricCapsule label="online" value={String(metrics.online)} hint="live players" />
-        <MetricCapsule label="avg load" value={`${metrics.avg_load}%`} hint="capacity pressure" />
-        <MetricCapsule label="market signals" value={String(metrics.products)} hint="top products" />
+        <MetricCapsule label={t.admin.metricServers} value={String(metrics.servers)} hint={t.admin.metricServersHint} />
+        <MetricCapsule label={t.admin.metricOnline} value={String(metrics.online)} hint={t.admin.metricOnlineHint} />
+        <MetricCapsule label={t.admin.metricLoad} value={`${metrics.avg_load}%`} hint={t.admin.metricLoadHint} />
+        <MetricCapsule label={t.admin.metricMarket} value={String(metrics.products)} hint={t.admin.metricMarketHint} />
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
         <div className="organism-panel rounded-[2rem] p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <Badge tone="success">lead organism</Badge>
-              <h2 className="mt-4 text-3xl font-semibold tracking-tight">Server performance</h2>
-              <p className="mt-2 text-sm text-fg-muted">Online, load and trust signals from live data.</p>
+              <Badge tone="success">{t.admin.leadOrganism}</Badge>
+              <h2 className="mt-4 text-3xl font-semibold tracking-tight">{t.admin.serverPerformance}</h2>
+              <p className="mt-2 text-sm text-fg-muted">{t.admin.serverPerformanceDesc}</p>
             </div>
           </div>
           <div className="mt-6 space-y-3">
@@ -83,21 +94,21 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="holo-panel rounded-[2rem] p-6">
-          <Badge tone="warning">market momentum</Badge>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight">Products that can grow servers</h2>
+          <Badge tone="warning">{t.admin.marketMomentum}</Badge>
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight">{t.admin.growthProducts}</h2>
           <div className="mt-6 space-y-3">
             {(data?.products ?? []).slice(0, 6).map((product) => (
               <Link key={product.slug} href={product.href} className="block rounded-2xl border border-white/10 bg-black/25 p-4 transition hover:border-violet/40">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="font-medium">{product.title}</div>
-                    <div className="text-xs text-fg-muted">{product.game ? gameLabel(product.game) : "Любая игра"} · ★ {product.rating.toFixed(1)}</div>
+                    <div className="text-xs text-fg-muted">{product.game ? gameLabel(product.game) : t.common.anyGame} · ★ {product.rating.toFixed(1)}</div>
                   </div>
-                  <div className="text-right text-sm text-fg-muted">{product.sales} sales</div>
+                  <div className="text-right text-sm text-fg-muted">{product.sales} {t.marketplace.sales}</div>
                 </div>
               </Link>
             ))}
-            {!data?.products?.length ? <p className="text-sm text-fg-muted">No product momentum yet.</p> : null}
+            {!data?.products?.length ? <p className="text-sm text-fg-muted">{t.admin.noProductMomentum}</p> : null}
           </div>
         </div>
       </section>
@@ -105,28 +116,30 @@ export default function AdminDashboardPage() {
       <section className="grid gap-5 lg:grid-cols-3">
         {(data?.recommendations ?? []).map((item) => (
           <div key={item.title} className="holo-panel rounded-[2rem] p-6">
-            <Badge tone={item.impact === "high" ? "warning" : "info"}>{humanizeSlug(item.type)} · {humanizeSlug(item.impact)}</Badge>
+            <Badge tone={item.impact === "high" ? "warning" : "info"}>
+              {recommendationTypeLabels[item.type] ?? humanizeSlug(item.type)} · {impactLabels[item.impact] ?? humanizeSlug(item.impact)}
+            </Badge>
             <h3 className="mt-4 text-xl font-semibold">{item.title}</h3>
             <p className="mt-4 text-sm leading-7 text-fg-muted">{item.action}</p>
           </div>
         ))}
         {!data ? (
           <div className="holo-panel rounded-[2rem] p-6 lg:col-span-3">
-            <Badge tone="info">copilot</Badge>
+            <Badge tone="info">{t.admin.copilot}</Badge>
             <p className="mt-4 text-sm text-fg-muted">{t.admin.noServerData}</p>
           </div>
         ) : null}
       </section>
 
       <section className="holo-panel rounded-[2rem] p-6">
-        <Badge tone="info">experiment queue</Badge>
-        <h2 className="mt-4 text-3xl font-semibold tracking-tight">Next growth experiments</h2>
+        <Badge tone="info">{t.admin.experimentQueue}</Badge>
+        <h2 className="mt-4 text-3xl font-semibold tracking-tight">{t.admin.nextExperiments}</h2>
         <div className="mt-6 grid gap-3 md:grid-cols-3">
-          {["Hero CTA", "Mod bundle", "Wipe countdown"].map((name) => (
+          {[t.admin.experimentHeroCta, t.admin.experimentModBundle, t.admin.experimentWipeCountdown].map((name) => (
             <div key={name} className="rounded-2xl border border-white/10 bg-black/25 p-4">
               <div className="font-medium">{name}</div>
-              <p className="mt-2 text-xs text-fg-muted">Create an A/B variant and compare profile-to-join conversion.</p>
-              <Button className="mt-4" size="sm" variant="outline">Queue test</Button>
+              <p className="mt-2 text-xs text-fg-muted">{t.admin.experimentDesc}</p>
+              <Button className="mt-4" size="sm" variant="outline">{t.admin.queueTest}</Button>
               </div>
           ))}
         </div>

@@ -94,7 +94,7 @@ export function CommandPalette() {
             next.push(
               ...servers.value.items.slice(0, 5).map((item) => ({
                 label: item.name,
-                hint: `${gameLabel(item.game)} · ${item.region ?? "global"} · ${item.snapshot?.online ?? 0}/${item.snapshot?.max_players ?? 0}`,
+                hint: `${gameLabel(item.game)} · ${item.region ?? t.common.global} · ${item.snapshot?.online ?? 0}/${item.snapshot?.max_players ?? 0}`,
                 href: `/servers/${item.id}`,
                 kind: "server",
               }))
@@ -105,7 +105,7 @@ export function CommandPalette() {
             next.push(
               ...games.value.items.slice(0, 4).map((item) => ({
                 label: item.title,
-                hint: `${categoryLabel(item.category)} · ${item.server_count} servers`,
+                hint: `${categoryLabel(item.category)} · ${item.server_count} ${t.nav.servers}`,
                 href: `/games/${item.slug}`,
                 kind: "game",
               }))
@@ -144,7 +144,7 @@ export function CommandPalette() {
             next.push(
               ...products.value.items.slice(0, 5).map((item) => ({
                 label: item.title,
-                hint: `${productTypeLabel(item.product_type)} · ${item.is_free ? "free" : `${item.price_rub} ₽`} · ★ ${item.rating_avg.toFixed(1)}`,
+                hint: `${productTypeLabel(item.product_type)} · ${item.is_free ? t.marketplace.free : `${item.price_rub} ₽`} · ★ ${item.rating_avg.toFixed(1)}`,
                 href: `/marketplace/${item.slug}`,
                 kind: "market",
               }))
@@ -162,7 +162,7 @@ export function CommandPalette() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [open, q]);
+  }, [open, q, t]);
 
   const filtered = React.useMemo(() => {
     const qq = q.trim().toLowerCase();

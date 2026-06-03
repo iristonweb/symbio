@@ -204,7 +204,7 @@ export default function HomePage() {
                     <div className="min-w-0">
                       <div className="truncate text-sm font-semibold">{server.name}</div>
                       <div className="mt-1 truncate text-[11px] uppercase tracking-[0.18em] text-fg-muted">
-                        {gameLabel(server.game)} · {humanizeSlug(server.mode ?? server.region ?? "live")}
+                        {gameLabel(server.game)} · {humanizeSlug(server.mode ?? server.region ?? t.common.live)}
                       </div>
                     </div>
                     <span className="rounded-full border border-primary/25 bg-primary/10 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-primary">
@@ -257,23 +257,23 @@ export default function HomePage() {
         <section className="holo-panel rounded-[2rem] p-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <Badge tone="warning">expert telemetry</Badge>
-              <h2 className="font-display mt-3 text-3xl font-semibold tracking-tight">Live ecosystem snapshot</h2>
+              <Badge tone="warning">{t.home.expertTelemetry}</Badge>
+              <h2 className="font-display mt-3 text-3xl font-semibold tracking-tight">{t.home.expertSnapshot}</h2>
             </div>
             <Link href="/servers?sort=online" className="text-sm text-primary hover:text-fg">
-              Open full server matrix →
+              {t.home.openServerMatrix} →
             </Link>
           </div>
           <div className="mt-6 overflow-x-auto">
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="text-xs uppercase tracking-[0.18em] text-fg-muted">
                 <tr>
-                  <th className="py-3">World</th>
-                  <th className="py-3">Game</th>
-                  <th className="py-3">Mode</th>
-                  <th className="py-3">Region</th>
-                  <th className="py-3 text-right">Online</th>
-                  <th className="py-3 text-right">Load</th>
+                  <th className="py-3">{t.home.expertWorld}</th>
+                  <th className="py-3">{t.nav.games}</th>
+                  <th className="py-3">{t.common.mode}</th>
+                  <th className="py-3">{t.common.region}</th>
+                  <th className="py-3 text-right">{t.servers.sortOnline}</th>
+                  <th className="py-3 text-right">{t.home.expertLoad}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
@@ -288,7 +288,7 @@ export default function HomePage() {
                       </td>
                       <td className="py-3">{gameLabel(server.game)}</td>
                       <td className="py-3">{humanizeSlug(server.mode)}</td>
-                      <td className="py-3">{humanizeSlug(server.region ?? "global")}</td>
+                      <td className="py-3">{humanizeSlug(server.region ?? t.common.global)}</td>
                       <td className="py-3 text-right">{server.online}/{server.maxPlayers}</td>
                       <td className="py-3 text-right">{load}%</td>
                     </tr>
@@ -328,12 +328,12 @@ export default function HomePage() {
                     <Badge tone={server.status === "online" ? "success" : "info"}>{gameLabel(server.game)}</Badge>
                     <h3 className="mt-3 truncate text-xl font-semibold">{server.name}</h3>
                     <p className="mt-1 text-sm text-fg-muted">
-                      {humanizeSlug(server.region ?? "global")} · {humanizeSlug(server.mode ?? "ecosystem")}
+                      {humanizeSlug(server.region ?? t.common.global)} · {humanizeSlug(server.mode ?? t.home.ecosystemLabel)}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
                     <div className="text-lg font-semibold text-gradient">{server.online}</div>
-                    <div className="text-[11px] text-fg-muted">online</div>
+                    <div className="text-[11px] text-fg-muted">{t.servers.sortOnline}</div>
                   </div>
                 </div>
                 <div className="mt-4 h-2 rounded-full bg-white/8">

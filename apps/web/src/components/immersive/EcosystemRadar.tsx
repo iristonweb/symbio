@@ -55,10 +55,10 @@ export function EcosystemRadarPanel({ fallbackServers = [] }: Props) {
               {data.stats.servers_online} {t.common.players}
             </span>
             <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1">
-              {data.stats.product_count} mods
+              {data.stats.product_count} {t.marketplace.modsLabel}
             </span>
             <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1">
-              {data.stats.game_count} games
+              {data.stats.game_count} {t.nav.games}
             </span>
           </div>
         ) : null}

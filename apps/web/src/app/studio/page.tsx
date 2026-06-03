@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { fetchApi, type ApiMarketplaceProduct } from "@/lib/platform-api";
+import { fetchApi, platformApi, type ApiGame, type ApiMarketplaceProduct } from "@/lib/platform-api";
 import { useAuth } from "@/components/AuthProvider";
 import { useLocale } from "@/components/LocaleProvider";
 import { Badge } from "@/components/ui/Badge";
@@ -21,10 +21,11 @@ export default function StudioPage() {
   const [msg, setMsg] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [products, setProducts] = React.useState<ApiMarketplaceProduct[]>([]);
+  const [games, setGames] = React.useState<ApiGame[]>([]);
 
   const [projectName, setProjectName] = React.useState("");
   const [projectDesc, setProjectDesc] = React.useState("");
-  const [gameSlugs, setGameSlugs] = React.useState("dayz");
+  const [projectGames, setProjectGames] = React.useState<string[]>(["dayz"]);
 
   const [serverName, setServerName] = React.useState("");
   const [serverGame, setServerGame] = React.useState("dayz");
@@ -48,6 +49,22 @@ export default function StudioPage() {
     if (user) loadCreatorProducts();
   }, [user, loadCreatorProducts]);
 
+  React.useEffect(() => {
+    platformApi.games({}).then((r) => setGames(r.items)).catch(() => setGames([]));
+  }, []);
+
+  const gameOptions = games.length ? games : [
+    { id: "dayz", slug: "dayz", title: "DayZ", category: "client", platforms: ["pc"], rating: 0, server_count: 0, genres: [] },
+    { id: "rust", slug: "rust", title: "Rust", category: "client", platforms: ["pc"], rating: 0, server_count: 0, genres: [] },
+    { id: "minecraft", slug: "minecraft", title: "Minecraft", category: "client", platforms: ["pc"], rating: 0, server_count: 0, genres: [] },
+  ] satisfies ApiGame[];
+
+  const toggleProjectGame = (slug: string) => {
+    setProjectGames((current) =>
+      current.includes(slug) ? current.filter((item) => item !== slug) : [...current, slug]
+    );
+  };
+
   const submitProject = async () => {
     setLoading(true);
     setMsg(null);
@@ -57,7 +74,7 @@ export default function StudioPage() {
         body: JSON.stringify({
           name: projectName,
           description: projectDesc,
-          game_slugs: gameSlugs.split(",").map((s) => s.trim()),
+          game_slugs: projectGames,
           links: {},
         }),
       });
@@ -127,6 +144,11 @@ export default function StudioPage() {
   const totalSales = products.reduce((sum, product) => sum + product.sales_count, 0);
   const pending = products.filter((product) => product.moderation_status === "pending").length;
   const approved = products.filter((product) => product.moderation_status === "approved").length;
+  const moderationLabels: Record<string, string> = {
+    approved: t.studio.statusApproved,
+    pending: t.studio.statusPending,
+    rejected: t.studio.statusRejected,
+  };
 
   return (
     <div className="space-y-10 pb-14">
@@ -178,11 +200,11 @@ export default function StudioPage() {
         <section className="space-y-6">
           <div className="grid gap-4 md:grid-cols-3">
             <div className="organism-panel rounded-2xl p-5">
-              <div className="text-sm text-fg-muted">Продуктов</div>
+              <div className="text-sm text-fg-muted">{t.studio.productsCount}</div>
               <div className="mt-2 text-3xl font-semibold">{products.length}</div>
             </div>
             <div className="organism-panel rounded-2xl p-5">
-              <div className="text-sm text-fg-muted">Approved / Pending</div>
+              <div className="text-sm text-fg-muted">{t.studio.moderationStats}</div>
               <div className="mt-2 text-3xl font-semibold">{approved}/{pending}</div>
             </div>
             <div className="organism-panel rounded-2xl p-5">
@@ -193,7 +215,7 @@ export default function StudioPage() {
           <div className="holo-panel rounded-[2rem] p-6">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-2xl font-semibold">Мои продукты</h2>
-              <Button size="sm" variant="premium" onClick={() => setTab("product")}>Новый продукт</Button>
+              <Button size="sm" variant="premium" onClick={() => setTab("product")}>{t.studio.newProduct}</Button>
             </div>
             <div className="mt-5 space-y-3">
               {products.map((product) => (
@@ -208,7 +230,7 @@ export default function StudioPage() {
                       </div>
                     </div>
                     <Badge tone={product.moderation_status === "approved" ? "success" : product.moderation_status === "rejected" ? "danger" : "warning"}>
-                      {product.moderation_status ?? "pending"}
+                      {moderationLabels[product.moderation_status ?? "pending"] ?? t.studio.statusPending}
                     </Badge>
                   </div>
                 </div>
@@ -226,11 +248,29 @@ export default function StudioPage() {
           <Input value={productTitle} onChange={(e) => setProductTitle(e.target.value)} placeholder={t.studio.productTitle} />
           <Input value={productDesc} onChange={(e) => setProductDesc(e.target.value)} placeholder={t.studio.description} />
           <div className="grid gap-4 sm:grid-cols-3">
-            <Input value={productType} onChange={(e) => setProductType(e.target.value)} placeholder={t.studio.productType} />
-            <Input value={productGame} onChange={(e) => setProductGame(e.target.value)} placeholder={t.studio.gameSlug} />
+            <select
+              value={productType}
+              onChange={(e) => setProductType(e.target.value)}
+              className="h-11 rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-fg"
+              aria-label={t.studio.productType}
+            >
+              {["mod", "addon", "resource_pack", "plugin", "service"].map((type) => (
+                <option key={type} value={type}>{productTypeLabel(type)}</option>
+              ))}
+            </select>
+            <select
+              value={productGame}
+              onChange={(e) => setProductGame(e.target.value)}
+              className="h-11 rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-fg"
+              aria-label={t.studio.game}
+            >
+              {gameOptions.map((game) => (
+                <option key={game.slug} value={game.slug}>{game.title || gameLabel(game.slug)}</option>
+              ))}
+            </select>
             <Input value={productPrice} onChange={(e) => setProductPrice(e.target.value)} placeholder="₽" />
           </div>
-          <Input value={productTags} onChange={(e) => setProductTags(e.target.value)} placeholder="tags" />
+          <Input value={productTags} onChange={(e) => setProductTags(e.target.value)} placeholder={t.studio.tagsPlaceholder} />
           <div className="rounded-2xl border border-dashed border-white/15 p-4 text-xs text-fg-muted">
             <p>{t.studio.uploadCover}</p>
             <p className="mt-1">{t.studio.uploadFile}</p>
@@ -247,7 +287,20 @@ export default function StudioPage() {
           <p className="text-sm text-fg-muted">{t.studio.wizardProjectDesc}</p>
           <Input value={projectName} onChange={(e) => setProjectName(e.target.value)} placeholder={t.studio.projectName} />
           <Input value={projectDesc} onChange={(e) => setProjectDesc(e.target.value)} placeholder={t.studio.description} />
-          <Input value={gameSlugs} onChange={(e) => setGameSlugs(e.target.value)} placeholder={t.studio.gamesList} />
+          <div>
+            <div className="mb-2 text-xs uppercase tracking-[0.18em] text-fg-muted">{t.studio.gamesList}</div>
+            <div className="flex flex-wrap gap-2">
+              {gameOptions.slice(0, 18).map((game) => (
+                <Chip
+                  key={game.slug}
+                  active={projectGames.includes(game.slug)}
+                  onClick={() => toggleProjectGame(game.slug)}
+                >
+                  {game.title || gameLabel(game.slug)}
+                </Chip>
+              ))}
+            </div>
+          </div>
           <Button disabled={loading || !projectName} onClick={submitProject}>
             {t.studio.createProject}
           </Button>
@@ -258,7 +311,16 @@ export default function StudioPage() {
         <div className="holo-panel max-w-xl space-y-4 rounded-[2rem] p-6">
           <p className="text-sm text-fg-muted">{t.studio.wizardServerDesc}</p>
           <Input value={serverName} onChange={(e) => setServerName(e.target.value)} placeholder={t.studio.serverName} />
-          <Input value={serverGame} onChange={(e) => setServerGame(e.target.value)} placeholder={t.studio.gameSlug} />
+          <select
+            value={serverGame}
+            onChange={(e) => setServerGame(e.target.value)}
+            className="h-11 rounded-2xl border border-white/10 bg-black/30 px-3 text-sm text-fg"
+            aria-label={t.studio.game}
+          >
+            {gameOptions.map((game) => (
+              <option key={game.slug} value={game.slug}>{game.title || gameLabel(game.slug)}</option>
+            ))}
+          </select>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Input value={host} onChange={(e) => setHost(e.target.value)} placeholder={t.studio.host} />
             <Input value={port} onChange={(e) => setPort(e.target.value)} placeholder={t.studio.port} />

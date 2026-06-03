@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import * as React from "react";
 import { platformApi, fetchApi, type ApiMarketplaceProduct } from "@/lib/platform-api";
 import { useLocale } from "@/components/LocaleProvider";
@@ -111,7 +112,14 @@ export default function MarketplacePage() {
             <GlowCard key={item.id} className="p-5">
               <div className="relative -mx-2 -mt-2 mb-4 h-36 overflow-hidden rounded-[1.5rem] border border-white/10 bg-[radial-gradient(circle_at_20%_15%,rgb(var(--primary)_/_0.28),transparent_32%),radial-gradient(circle_at_85%_25%,rgb(var(--violet)_/_0.24),transparent_34%),linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))]">
                 {item.cover_url ? (
-                  <img src={item.cover_url} alt="" className="h-full w-full object-cover opacity-85" />
+                  <Image
+                    src={item.cover_url}
+                    alt=""
+                    fill
+                    sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                    className="object-cover opacity-85"
+                    unoptimized
+                  />
                 ) : null}
                 <div className="absolute inset-0 ecosystem-grid opacity-30" />
                 <div className="absolute left-3 top-3 flex flex-wrap gap-2">

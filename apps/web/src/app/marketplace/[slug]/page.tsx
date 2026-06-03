@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import { platformApi, fetchApi } from "@/lib/platform-api";
 import { useLocale } from "@/components/LocaleProvider";
@@ -73,7 +74,16 @@ export default function MarketplaceProductPage() {
       <section className="holo-panel rounded-[2.5rem] p-8">
         <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="relative min-h-[280px] overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_20%_20%,rgb(var(--primary)_/_0.3),transparent_35%),radial-gradient(circle_at_80%_20%,rgb(var(--violet)_/_0.24),transparent_35%),linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))]">
-            {product.cover_url ? <img src={product.cover_url} alt="" className="h-full w-full object-cover" /> : null}
+            {product.cover_url ? (
+              <Image
+                src={product.cover_url}
+                alt=""
+                fill
+                sizes="(min-width: 1024px) 40vw, 100vw"
+                className="object-cover"
+                unoptimized
+              />
+            ) : null}
             <div className="absolute inset-0 ecosystem-grid opacity-30" />
             <div
               className="absolute bottom-4 left-4 rounded-full border border-accent/30 bg-black/55 px-3 py-1 text-xs text-accent backdrop-blur-xl"
