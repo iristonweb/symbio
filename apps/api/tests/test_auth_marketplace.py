@@ -3,20 +3,24 @@ from httpx import ASGITransport, AsyncClient
 
 from app.main import app
 
-pytestmark = pytest.mark.asyncio
+pytestmark = pytest.mark.asyncio(loop_scope="session")
 
 
 def _db_available() -> bool:
     try:
         import asyncio
         from sqlalchemy import text
-        from app.db.session import engine
+        from sqlalchemy.ext.asyncio import create_async_engine
+        from sqlalchemy.pool import NullPool
+        from app.core.config import settings
 
         async def ping():
+            engine = create_async_engine(settings.DATABASE_URL, poolclass=NullPool)
             async with engine.connect() as conn:
                 await conn.execute(text("SELECT 1"))
+            await engine.dispose()
 
-        asyncio.get_event_loop().run_until_complete(ping())
+        asyncio.run(ping())
         return True
     except Exception:
         return False
@@ -41,7 +45,7 @@ async def test_register_and_me():
         if reg.status_code == 409:
             login = await client.post(
                 "/auth/login",
-                data={"username": email, "password": "testpass123"},
+                json={"username": email, "password": "testpass123"},
             )
             token = login.json()["access_token"]
         else:

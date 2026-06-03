@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { fetchApi, platformApi, type ApiGame, type ApiMarketplaceProduct } from "@/lib/platform-api";
+import { fetchApi, platformApi, type ApiGame, type ApiMarketplaceProduct, type ApiProject, type ApiServer } from "@/lib/platform-api";
 import { useAuth } from "@/components/AuthProvider";
 import { useLocale } from "@/components/LocaleProvider";
 import { Badge } from "@/components/ui/Badge";
@@ -22,6 +22,8 @@ export default function StudioPage() {
   const [loading, setLoading] = React.useState(false);
   const [products, setProducts] = React.useState<ApiMarketplaceProduct[]>([]);
   const [games, setGames] = React.useState<ApiGame[]>([]);
+  const [projects, setProjects] = React.useState<ApiProject[]>([]);
+  const [servers, setServers] = React.useState<ApiServer[]>([]);
 
   const [projectName, setProjectName] = React.useState("");
   const [projectDesc, setProjectDesc] = React.useState("");
@@ -45,9 +47,17 @@ export default function StudioPage() {
       .catch(() => setProducts([]));
   }, []);
 
+  const loadStudioAssets = React.useCallback(() => {
+    platformApi.myProjects().then((r) => setProjects(r.items)).catch(() => setProjects([]));
+    platformApi.myServers().then((r) => setServers(r.items)).catch(() => setServers([]));
+  }, []);
+
   React.useEffect(() => {
-    if (user) loadCreatorProducts();
-  }, [user, loadCreatorProducts]);
+    if (user) {
+      loadCreatorProducts();
+      loadStudioAssets();
+    }
+  }, [user, loadCreatorProducts, loadStudioAssets]);
 
   React.useEffect(() => {
     platformApi.games({}).then((r) => setGames(r.items)).catch(() => setGames([]));
@@ -79,6 +89,7 @@ export default function StudioPage() {
         }),
       });
       setMsg(`${t.studio.created}: ${r.slug}`);
+      loadStudioAssets();
       router.push(`/projects/${r.slug}`);
     } catch (e: unknown) {
       setMsg(e instanceof Error ? e.message : t.studio.signInFirst);
@@ -102,6 +113,7 @@ export default function StudioPage() {
         }),
       });
       setMsg(t.studio.created);
+      loadStudioAssets();
       router.push(`/servers/${r.id}`);
     } catch (e: unknown) {
       setMsg(e instanceof Error ? e.message : t.studio.signInFirst);
@@ -200,16 +212,59 @@ export default function StudioPage() {
         <section className="space-y-6">
           <div className="grid gap-4 md:grid-cols-3">
             <div className="organism-panel rounded-2xl p-5">
-              <div className="text-sm text-fg-muted">{t.studio.productsCount}</div>
-              <div className="mt-2 text-3xl font-semibold">{products.length}</div>
+              <div className="text-sm text-fg-muted">{t.studio.projectCount}</div>
+              <div className="mt-2 text-3xl font-semibold">{projects.length}</div>
             </div>
             <div className="organism-panel rounded-2xl p-5">
-              <div className="text-sm text-fg-muted">{t.studio.moderationStats}</div>
-              <div className="mt-2 text-3xl font-semibold">{approved}/{pending}</div>
+              <div className="text-sm text-fg-muted">{t.studio.serverCount}</div>
+              <div className="mt-2 text-3xl font-semibold">{servers.length}</div>
             </div>
             <div className="organism-panel rounded-2xl p-5">
-              <div className="text-sm text-fg-muted">Продаж</div>
+              <div className="text-sm text-fg-muted">{t.studio.salesCount}</div>
               <div className="mt-2 text-3xl font-semibold text-gradient">{totalSales}</div>
+            </div>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="holo-panel rounded-[2rem] p-6">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-2xl font-semibold">{t.studio.myProjects}</h2>
+                <Button size="sm" variant="premium" onClick={() => setTab("project")}>{t.studio.createProject}</Button>
+              </div>
+              <div className="mt-5 space-y-3">
+                {projects.map((project) => (
+                  <div key={project.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <Link href={`/projects/${project.slug}`} className="font-medium hover:text-primary">{project.name}</Link>
+                    <div className="mt-1 flex flex-wrap gap-2 text-xs text-fg-muted">
+                      {project.game_slugs.slice(0, 3).map((slug) => <span key={slug}>{gameLabel(slug)}</span>)}
+                      <Badge tone={project.moderation_status === "approved" ? "success" : "warning"}>
+                        {moderationLabels[project.moderation_status ?? "pending"] ?? t.studio.statusPending}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+                {projects.length === 0 ? <p className="text-sm text-fg-muted">{t.studio.noProjects}</p> : null}
+              </div>
+            </div>
+            <div className="holo-panel rounded-[2rem] p-6">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-2xl font-semibold">{t.studio.myServers}</h2>
+                <Button size="sm" variant="premium" onClick={() => setTab("server")}>{t.studio.addServer}</Button>
+              </div>
+              <div className="mt-5 space-y-3">
+                {servers.map((server) => (
+                  <div key={server.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <Link href={`/servers/${server.id}`} className="font-medium hover:text-primary">{server.name}</Link>
+                    <div className="mt-1 flex flex-wrap gap-2 text-xs text-fg-muted">
+                      <span>{gameLabel(server.game)}</span>
+                      <span>{server.host}:{server.port}</span>
+                      <Badge tone={server.moderation_status === "approved" ? "success" : "warning"}>
+                        {moderationLabels[server.moderation_status ?? "pending"] ?? t.studio.statusPending}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+                {servers.length === 0 ? <p className="text-sm text-fg-muted">{t.studio.noServers}</p> : null}
+              </div>
             </div>
           </div>
           <div className="holo-panel rounded-[2rem] p-6">

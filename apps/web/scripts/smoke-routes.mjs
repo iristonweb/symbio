@@ -20,6 +20,18 @@ const required = [
   "robots.ts",
   "contests/[slug]/page.tsx",
   "admin/layout.tsx",
+  "admin/dashboard/page.tsx",
+  "admin/imports/page.tsx",
+  "auth/login/page.tsx",
+  "billing/page.tsx",
+  "games/page.tsx",
+  "marketplace/page.tsx",
+  "marketplace/cart/page.tsx",
+  "marketplace/library/page.tsx",
+  "profile/page.tsx",
+  "projects/page.tsx",
+  "servers/page.tsx",
+  "studio/page.tsx",
 ];
 
 let failed = 0;

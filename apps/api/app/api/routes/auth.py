@@ -204,6 +204,10 @@ async def google_callback(
     dev: str | None = None,
     db: AsyncSession = Depends(get_db),
 ):
+    if dev != "1":
+        state_data = oauth_service.pop_oauth_state(state or "")
+        if not state_data or state_data.get("provider") != "google":
+            raise HTTPException(status_code=400, detail="Invalid OAuth state")
     if dev == "1" or not code:
         profile = {
             "provider_user_id": f"dev-google-{state or 'x'}",
@@ -228,6 +232,10 @@ async def steam_callback(
     dev: str | None = None,
     db: AsyncSession = Depends(get_db),
 ):
+    if dev != "1":
+        state_data = oauth_service.pop_oauth_state(state or "")
+        if not state_data or state_data.get("provider") != "steam":
+            raise HTTPException(status_code=400, detail="Invalid OAuth state")
     if dev == "1" or not openid_claimed_id:
         steam_id = f"dev-steam-{state or 'x'}"
     else:
@@ -256,6 +264,8 @@ async def _oauth_login(db: AsyncSession, provider: str, profile: dict):
         await tokens_crud.link_identity(
             db, user.id, provider, profile["provider_user_id"], profile.get("email"), profile
         )
+    if not user or not user.is_active:
+        raise HTTPException(status_code=403, detail="Account disabled")
     await users_crud.touch_login(db, user)
     await db.commit()
     token = create_access_token(subject=user.email, roles=user.roles or ["user"])

@@ -6,8 +6,9 @@ Revision ID: 001_launch
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
+
+from app.db.base import Base
+import app.db.models  # noqa: F401 - registers all launch tables
 
 revision: str = "001_launch"
 down_revision: Union[str, None] = None
@@ -16,9 +17,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Fresh installs use init_db create_all; migration documents launch DDL for existing DBs.
-    pass
+    bind = op.get_bind()
+    Base.metadata.create_all(bind=bind, checkfirst=True)
 
 
 def downgrade() -> None:
-    pass
+    bind = op.get_bind()
+    Base.metadata.drop_all(bind=bind, checkfirst=True)

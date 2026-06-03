@@ -11,6 +11,7 @@ from app.api.deps import get_current_user, get_db
 from app.core.config import settings
 from app.core.rbac import require_capability
 from app.db.crud import marketplace as mp_crud
+from app.services.payment_provider import get_payment_provider
 from app.db.models.user import User
 from app.db.models.marketplace import (
     MarketplaceProduct,
@@ -76,6 +77,10 @@ class ProductFileCreateIn(BaseModel):
     size_bytes: int = 0
     checksum: str | None = None
     content_type: str = "application/octet-stream"
+
+
+class CartCheckoutIn(BaseModel):
+    provider: str = "mock"
 
 
 class ProductDependencyIn(BaseModel):
@@ -416,12 +421,32 @@ async def remove_cart_item(product_id: UUID, user: User = Depends(get_current_us
 
 
 @router.post("/checkout")
-async def checkout(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    order = await mp_crud.checkout_cart(db, user.id, provider="mock")
+async def checkout(
+    body: CartCheckoutIn | None = None,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    provider_name = (body.provider if body else "mock") or "mock"
+    order = await mp_crud.checkout_cart(db, user.id, provider=provider_name)
     if not order:
         raise HTTPException(400, "Cart is empty")
+    payment_url = None
+    if order.status == "pending":
+        provider = get_payment_provider(provider_name)
+        checkout_data = await provider.create_checkout(
+            user_id=user.id,
+            amount=order.total_rub,
+            currency=order.currency,
+            description=f"SYMBIO marketplace order {order.id}",
+            return_url=f"{settings.WEB_BASE_URL}/marketplace/library",
+            meta={"kind": "marketplace_order", "order_id": str(order.id)},
+        )
+        order.provider_ref = checkout_data.get("provider_ref")
+        payment_url = checkout_data.get("payment_url")
+        if checkout_data.get("status") == "paid":
+            await mp_crud.fulfill_paid_order(db, order)
     await db.commit()
-    return {"order_id": str(order.id), "status": order.status, "total_rub": order.total_rub}
+    return {"order_id": str(order.id), "status": order.status, "total_rub": order.total_rub, "payment_url": payment_url}
 
 
 @router.get("/library")

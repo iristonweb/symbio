@@ -19,12 +19,21 @@ const fontDisplay = Onest({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://symbio-web.vercel.app"),
   title: "SYMBIO — экосистема игровых серверов",
   description:
     "Server Hub, Marketplace и Studio — найти сервер, купить моды, управлять сообществом в экосистеме SYMBIO.",
   openGraph: {
     title: "SYMBIO — экосистема игровых серверов",
     description: "Server Hub · Marketplace · Studio",
+    type: "website",
+    images: [{ url: "/symbio-hero-world-radar.png", width: 1024, height: 768, alt: "SYMBIO ecosystem radar" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SYMBIO — экосистема игровых серверов",
+    description: "Server Hub, Marketplace и Studio для игровых сообществ.",
+    images: ["/symbio-hero-world-radar.png"],
   },
   icons: {
     icon: "/symbio-logo.svg",

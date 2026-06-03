@@ -201,6 +201,32 @@ async def commission_for_creator(db: AsyncSession, creator_id: UUID) -> float:
     return settings.DEFAULT_COMMISSION_PERCENT
 
 
+async def fulfill_paid_order(db: AsyncSession, order: Order) -> Order:
+    items = (
+        await db.execute(
+            select(OrderItem, MarketplaceProduct)
+            .join(MarketplaceProduct, MarketplaceProduct.id == OrderItem.product_id)
+            .where(OrderItem.order_id == order.id)
+        )
+    ).all()
+    order.status = "paid"
+    order.paid_at = datetime.now(timezone.utc)
+    for _, product in items:
+        existing = (
+            await db.execute(
+                select(License).where(License.user_id == order.user_id, License.product_id == product.id)
+            )
+        ).scalar_one_or_none()
+        if not existing:
+            db.add(License(user_id=order.user_id, product_id=product.id, order_id=order.id))
+        product.sales_count += 1
+    cart = await get_or_create_cart(db, order.user_id)
+    cart_items = await get_cart_items(db, cart.id)
+    for item, _ in cart_items:
+        await db.delete(item)
+    return order
+
+
 async def checkout_cart(db: AsyncSession, user_id: UUID, provider: str = "mock") -> Order | None:
     cart = await get_or_create_cart(db, user_id)
     items = await get_cart_items(db, cart.id)
@@ -227,20 +253,8 @@ async def checkout_cart(db: AsyncSession, user_id: UUID, provider: str = "mock")
         )
 
     if provider == "mock":
-        order.status = "paid"
-        order.paid_at = datetime.now(timezone.utc)
         order.provider_ref = f"mock-order-{order.id}"
-        for _, product in items:
-            existing = (
-                await db.execute(
-                    select(License).where(License.user_id == user_id, License.product_id == product.id)
-                )
-            ).scalar_one_or_none()
-            if not existing:
-                db.add(License(user_id=user_id, product_id=product.id, order_id=order.id))
-            product.sales_count += 1
-        for item, _ in items:
-            await db.delete(item)
+        await fulfill_paid_order(db, order)
 
     return order
 

@@ -57,6 +57,9 @@ async def post_promotion(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    allowed, reason = await billing_crud.can_promote_target(db, user.id, body.target_type, body.target_id)
+    if not allowed:
+        raise HTTPException(status_code=403, detail=reason or "Promotion target is not allowed for current plan")
     promo = await billing_crud.create_promotion(
         db, user.id, body.target_type, body.target_id, body.promo_type, body.days
     )

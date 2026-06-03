@@ -1,13 +1,20 @@
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.billing import Plan, Subscription, Wallet, WalletTransaction, Promotion, Invoice
+from app.db.models.project import Project
+from app.db.models.server import Server
 
 
 PROMO_COSTS = {"featured": 50, "boost": 30, "pinned": 20}
+
+NETWORK_PLAN_SLUGS = {"owner-growth", "owner-network"}
+PROJECT_POOL_PLAN_SLUGS = {"owner-premium", *NETWORK_PLAN_SLUGS}
+PROJECT_LIMITS = {"owner-starter": 1, "owner-premium": 3, "owner-growth": 10, "owner-network": None}
+SERVER_LIMITS = {"owner-starter": 1, "owner-premium": 10, "owner-growth": 100, "owner-network": None}
 
 
 async def list_plans(db: AsyncSession, audience: str | None = None) -> list[Plan]:
@@ -19,6 +26,95 @@ async def list_plans(db: AsyncSession, audience: str | None = None) -> list[Plan
 
 async def get_plan_by_slug(db: AsyncSession, slug: str) -> Plan | None:
     return (await db.execute(select(Plan).where(Plan.slug == slug))).scalar_one_or_none()
+
+
+async def get_active_subscription_plan(db: AsyncSession, user_id: UUID) -> Plan | None:
+    now = datetime.now(timezone.utc)
+    row = (
+        await db.execute(
+            select(Subscription, Plan)
+            .join(Plan, Plan.id == Subscription.plan_id)
+            .where(
+                Subscription.user_id == user_id,
+                Subscription.status == "active",
+                (Subscription.expires_at.is_(None) | (Subscription.expires_at > now)),
+            )
+            .order_by(Plan.price_monthly.desc(), Subscription.expires_at.desc().nullslast())
+            .limit(1)
+        )
+    ).first()
+    return row[1] if row else None
+
+
+async def _owned_server(db: AsyncSession, user_id: UUID, server_id: UUID) -> Server | None:
+    return (
+        await db.execute(select(Server).where(Server.id == server_id, Server.owner_id == user_id))
+    ).scalar_one_or_none()
+
+
+async def _owned_project(db: AsyncSession, user_id: UUID, project_id: UUID) -> Project | None:
+    return (
+        await db.execute(select(Project).where(Project.id == project_id, Project.owner_id == user_id))
+    ).scalar_one_or_none()
+
+
+async def can_promote_target(db: AsyncSession, user_id: UUID, target_type: str, target_id: UUID) -> tuple[bool, str | None]:
+    plan = await get_active_subscription_plan(db, user_id)
+    plan_slug = plan.slug if plan else "owner-starter"
+
+    if target_type == "server":
+        server = await _owned_server(db, user_id, target_id)
+        if not server:
+            return False, "Server is not owned by user"
+        if plan_slug in NETWORK_PLAN_SLUGS:
+            return True, None
+        if plan_slug in PROJECT_POOL_PLAN_SLUGS:
+            if server.project_id:
+                project = await _owned_project(db, user_id, server.project_id)
+                return (project is not None), None if project else "Server project is not owned by user"
+            return True, None
+        return True, None
+
+    if target_type == "project":
+        project = await _owned_project(db, user_id, target_id)
+        if not project:
+            return False, "Project is not owned by user"
+        if plan_slug in PROJECT_POOL_PLAN_SLUGS:
+            return True, None
+        return False, "Project-level token pool requires Owner Premium or higher"
+
+    return False, "Unsupported promotion target"
+
+
+async def can_create_project(db: AsyncSession, user_id: UUID) -> tuple[bool, str | None]:
+    plan = await get_active_subscription_plan(db, user_id)
+    limit = PROJECT_LIMITS.get(plan.slug if plan else "owner-starter", 1)
+    if limit is None:
+        return True, None
+    count = (
+        await db.execute(select(func.count(Project.id)).where(Project.owner_id == user_id))
+    ).scalar_one()
+    if count >= limit:
+        return False, f"Project limit reached for current plan ({limit})"
+    return True, None
+
+
+async def can_create_server(db: AsyncSession, user_id: UUID, project_id: UUID | None = None) -> tuple[bool, str | None]:
+    if project_id:
+        project = await _owned_project(db, user_id, project_id)
+        if not project:
+            return False, "Project is not owned by user"
+
+    plan = await get_active_subscription_plan(db, user_id)
+    limit = SERVER_LIMITS.get(plan.slug if plan else "owner-starter", 1)
+    if limit is None:
+        return True, None
+    count = (
+        await db.execute(select(func.count(Server.id)).where(Server.owner_id == user_id))
+    ).scalar_one()
+    if count >= limit:
+        return False, f"Server limit reached for current plan ({limit})"
+    return True, None
 
 
 async def get_or_create_wallet(db: AsyncSession, user_id: UUID) -> Wallet:
@@ -59,7 +155,14 @@ async def add_credits(
     return wallet
 
 
-async def spend_credits(db: AsyncSession, user_id: UUID, amount: int, tx_type: str, description: str | None = None) -> Wallet | None:
+async def spend_credits(
+    db: AsyncSession,
+    user_id: UUID,
+    amount: int,
+    tx_type: str,
+    description: str | None = None,
+    meta: dict | None = None,
+) -> Wallet | None:
     wallet = await get_or_create_wallet(db, user_id)
     if wallet.balance_credits < amount:
         return None
@@ -71,6 +174,7 @@ async def spend_credits(db: AsyncSession, user_id: UUID, amount: int, tx_type: s
             amount=-amount,
             tx_type=tx_type,
             description=description,
+            meta=meta or {},
         )
     )
     return wallet
@@ -111,8 +215,18 @@ async def create_promotion(
     promo_type: str,
     days: int,
 ) -> Promotion | None:
+    allowed, _reason = await can_promote_target(db, user_id, target_type, target_id)
+    if not allowed:
+        return None
     cost = PROMO_COSTS.get(promo_type, 30) * days
-    wallet = await spend_credits(db, user_id, cost, "promotion", f"{promo_type} for {days}d")
+    wallet = await spend_credits(
+        db,
+        user_id,
+        cost,
+        "promotion",
+        f"{promo_type} for {days}d",
+        meta={"target_type": target_type, "target_id": str(target_id), "promo_type": promo_type, "days": days},
+    )
     if not wallet:
         return None
     promo = Promotion(

@@ -29,6 +29,7 @@ export type ApiServer = {
   rating: number;
   votes: number;
   claim_status: string;
+  moderation_status?: string;
   project_id?: string | null;
   source_url?: string | null;
   snapshot?: ServerSnapshot | null;
@@ -60,6 +61,7 @@ export type ApiProject = {
   max_players_total: number;
   source_url?: string | null;
   servers?: ApiServer[];
+  moderation_status?: string;
 };
 
 export type ApiArticle = {
@@ -157,6 +159,7 @@ export const platformApi = {
     return fetchApi<{ items: ApiProject[]; total: number }>(`/projects?${q}`);
   },
   project: (slug: string) => fetchApi<ApiProject>(`/projects/${slug}`),
+  myProjects: () => fetchApi<{ items: ApiProject[]; total: number }>("/projects/mine"),
   servers: (params?: { game?: string; sort?: string; q?: string; style?: string }) => {
     const q = new URLSearchParams();
     if (params?.game) q.set("game", params.game);
@@ -166,6 +169,7 @@ export const platformApi = {
     return fetchApi<{ items: ApiServer[] }>(`/servers?${q}`);
   },
   server: (id: string) => fetchApi<ApiServer>(`/servers/${id}`),
+  myServers: () => fetchApi<{ items: ApiServer[]; total: number }>("/servers/mine"),
   articles: (type?: string) =>
     fetchApi<{ items: ApiArticle[] }>(`/articles${type ? `?type=${type}` : ""}`),
   article: (slug: string) => fetchApi<ApiArticle>(`/articles/${slug}`),

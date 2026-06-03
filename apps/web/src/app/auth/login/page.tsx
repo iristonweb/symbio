@@ -42,7 +42,8 @@ export default function LoginPage() {
       if (!res.ok) throw new Error((await res.text()) || t.auth.loginFailed);
       const data = await res.json();
       await setAuthToken(data.access_token);
-      router.push("/profile");
+      const next = new URLSearchParams(window.location.search).get("next");
+      router.push(next?.startsWith("/") && !next.startsWith("//") ? next : "/profile");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t.auth.loginFailed);
     } finally {

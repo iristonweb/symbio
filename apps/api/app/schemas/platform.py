@@ -139,6 +139,13 @@ class ProjectCreate(BaseModel):
     links: dict = {}
 
 
+class ProjectUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=200)
+    description: str | None = None
+    game_slugs: list[str] | None = None
+    links: dict | None = None
+
+
 class ServerCreate(BaseModel):
     game: str
     name: str = Field(min_length=2, max_length=200)
@@ -149,6 +156,18 @@ class ServerCreate(BaseModel):
     description: str | None = None
     project_id: UUID | None = None
     tags: dict = {}
+
+
+class ServerUpdate(BaseModel):
+    game: str | None = None
+    name: str | None = Field(default=None, min_length=2, max_length=200)
+    host: str | None = None
+    port: int | None = Field(default=None, ge=1, le=65535)
+    region: str | None = None
+    mode: str | None = None
+    description: str | None = None
+    project_id: UUID | None = None
+    tags: dict | None = None
 
 
 class ClaimRequest(BaseModel):
