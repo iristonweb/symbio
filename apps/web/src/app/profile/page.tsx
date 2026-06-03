@@ -185,6 +185,34 @@ function ProfileContent() {
               </Badge>
             ))}
           </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {!identities.social_providers.includes("steam") ? (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  platformApi.oauthStart("steam", { link: true }).then((r) => {
+                    window.location.href = r.url;
+                  })
+                }
+              >
+                {t.auth.oauthSteam}
+              </Button>
+            ) : null}
+            {!identities.social_providers.includes("google") ? (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  platformApi.oauthStart("google", { link: true }).then((r) => {
+                    window.location.href = r.url;
+                  })
+                }
+              >
+                {t.auth.oauthGoogle}
+              </Button>
+            ) : null}
+          </div>
         </section>
       ) : null}
 

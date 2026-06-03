@@ -1,11 +1,13 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status  # noqa: F401 Query used
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status  # noqa: F401 Query used
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user, get_db
+from app.api.deps import get_current_user, get_current_user_optional, get_db
 from app.core.rbac import user_capabilities
 from app.core.security import hash_password, verify_password, create_access_token
 from app.db.crud import users as users_crud
@@ -192,8 +194,14 @@ async def confirm_verify_email(token: str = Query(...), db: AsyncSession = Depen
 
 
 @router.get("/google/start")
-async def google_start():
-    state = oauth_service.create_oauth_state("google")
+async def google_start(
+    link: bool = Query(default=False),
+    user: User | None = Depends(get_current_user_optional),
+):
+    extra: dict = {}
+    if link and user:
+        extra["link_user_id"] = str(user.id)
+    state = oauth_service.create_oauth_state("google", extra=extra or None)
     return {"url": oauth_service.google_auth_url(state), "state": state}
 
 
@@ -204,6 +212,7 @@ async def google_callback(
     dev: str | None = None,
     db: AsyncSession = Depends(get_db),
 ):
+    state_data: dict | None = None
     if dev != "1":
         state_data = oauth_service.pop_oauth_state(state or "")
         if not state_data or state_data.get("provider") != "google":
@@ -216,35 +225,89 @@ async def google_callback(
         }
     else:
         profile = await oauth_service.exchange_google_code(code)
-    return await _oauth_login(db, "google", profile)
+    link_user_id = (state_data or {}).get("link_user_id")
+    return await _oauth_login(db, "google", profile, link_user_id=link_user_id)
 
 
 @router.get("/steam/start")
-async def steam_start():
-    state = oauth_service.create_oauth_state("steam")
+async def steam_start(
+    link: bool = Query(default=False),
+    user: User | None = Depends(get_current_user_optional),
+):
+    extra: dict = {}
+    if link and user:
+        extra["link_user_id"] = str(user.id)
+    state = oauth_service.create_oauth_state("steam", extra=extra or None)
     return {"url": oauth_service.steam_auth_url(state), "state": state}
 
 
 @router.get("/steam/callback")
 async def steam_callback(
+    request: Request,
     state: str | None = None,
-    openid_claimed_id: str | None = Query(None, alias="openid.claimed_id"),
     dev: str | None = None,
     db: AsyncSession = Depends(get_db),
 ):
+    state_data: dict | None = None
     if dev != "1":
         state_data = oauth_service.pop_oauth_state(state or "")
         if not state_data or state_data.get("provider") != "steam":
             raise HTTPException(status_code=400, detail="Invalid OAuth state")
-    if dev == "1" or not openid_claimed_id:
+
+    if dev == "1":
         steam_id = f"dev-steam-{state or 'x'}"
+        profile = {"provider_user_id": steam_id, "email": None, "name": f"Steam {steam_id}", "meta": {}}
     else:
-        steam_id = oauth_service.parse_steam_id_from_claimed(openid_claimed_id)
-    profile = {"provider_user_id": steam_id, "email": None, "name": f"Steam {steam_id}"}
-    return await _oauth_login(db, "steam", profile)
+        params = dict(request.query_params)
+        if not await oauth_service.verify_steam_openid(params):
+            raise HTTPException(status_code=400, detail="Steam OpenID verification failed")
+        claimed = params.get("openid.claimed_id")
+        if not claimed:
+            raise HTTPException(status_code=400, detail="Missing Steam identity")
+        steam_id = oauth_service.parse_steam_id_from_claimed(claimed)
+        steam_profile = await oauth_service.fetch_steam_profile(steam_id)
+        profile = {
+            "provider_user_id": steam_id,
+            "email": None,
+            "name": steam_profile.get("personaname") or f"Steam {steam_id}",
+            "meta": {
+                "avatar_url": steam_profile.get("avatarfull"),
+                "profileurl": steam_profile.get("profileurl"),
+            },
+        }
+
+    link_user_id = (state_data or {}).get("link_user_id")
+    return await _oauth_login(db, "steam", profile, link_user_id=link_user_id)
 
 
-async def _oauth_login(db: AsyncSession, provider: str, profile: dict):
+async def _oauth_login(db: AsyncSession, provider: str, profile: dict, link_user_id: str | None = None):
+    meta = profile.get("meta") or {}
+
+    if link_user_id:
+        user = await users_crud.get_by_id(db, UUID(link_user_id))
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        existing = await tokens_crud.get_identity(db, provider, profile["provider_user_id"])
+        if existing and existing.user_id != user.id:
+            raise HTTPException(status_code=409, detail="Account already linked to another user")
+        if not existing:
+            await tokens_crud.link_identity(
+                db,
+                user.id,
+                provider,
+                profile["provider_user_id"],
+                profile.get("email"),
+                meta,
+            )
+        if profile.get("name") and not user.display_name:
+            user.display_name = profile["name"]
+        await users_crud.touch_login(db, user)
+        await db.commit()
+        token = create_access_token(subject=user.email, roles=user.roles or ["user"])
+        from app.core.config import settings
+
+        return RedirectResponse(f"{settings.WEB_BASE_URL}/auth/oauth-callback?token={token}")
+
     identity = await tokens_crud.get_identity(db, provider, profile["provider_user_id"])
     if identity:
         user = await users_crud.get_by_id(db, identity.user_id)
@@ -262,7 +325,7 @@ async def _oauth_login(db: AsyncSession, provider: str, profile: dict):
                 email_verified=bool(profile.get("email")),
             )
         await tokens_crud.link_identity(
-            db, user.id, provider, profile["provider_user_id"], profile.get("email"), profile
+            db, user.id, provider, profile["provider_user_id"], profile.get("email"), meta or profile
         )
     if not user or not user.is_active:
         raise HTTPException(status_code=403, detail="Account disabled")

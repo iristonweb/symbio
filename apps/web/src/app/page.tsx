@@ -221,6 +221,56 @@ export default function HomePage() {
         </div>
       </section>
 
+      {mode === "expert" ? (
+        <section className="holo-panel rounded-[2rem] p-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <Badge tone="warning">{t.home.expertTelemetry}</Badge>
+              <h2 className="font-display mt-3 text-3xl font-semibold tracking-tight">{t.home.expertSnapshot}</h2>
+              <p className="mt-2 max-w-2xl text-sm text-fg-muted">{t.mode.expertHint}</p>
+            </div>
+            <Link href="/servers?sort=online" className="text-sm text-primary hover:text-fg">
+              {t.home.openServerMatrix} →
+            </Link>
+          </div>
+          <div className="mt-6 overflow-x-auto">
+            <table className="w-full min-w-[720px] text-left text-sm">
+              <thead className="text-xs uppercase tracking-[0.18em] text-fg-muted">
+                <tr>
+                  <th className="py-3">{t.home.expertWorld}</th>
+                  <th className="py-3">{t.nav.games}</th>
+                  <th className="py-3">{t.common.mode}</th>
+                  <th className="py-3">{t.common.region}</th>
+                  <th className="py-3 text-right">{t.servers.sortOnline}</th>
+                  <th className="py-3 text-right">{t.home.expertLoad}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {sourceServers.slice(0, 8).map((server) => {
+                  const load = server.maxPlayers > 0 ? Math.round((server.online / server.maxPlayers) * 100) : 0;
+                  return (
+                    <tr key={server.id} className="text-fg-muted">
+                      <td className="py-3">
+                        <Link href={server.href} className="font-medium text-fg hover:text-primary">
+                          {server.name}
+                        </Link>
+                      </td>
+                      <td className="py-3">{gameLabel(server.game)}</td>
+                      <td className="py-3">{humanizeSlug(server.mode)}</td>
+                      <td className="py-3">{humanizeSlug(server.region ?? t.common.global)}</td>
+                      <td className="py-3 text-right">
+                        {server.online}/{server.maxPlayers}
+                      </td>
+                      <td className="py-3 text-right">{load}%</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
+
       <section className="grid gap-4 md:grid-cols-3">
         {[
           { title: t.home.pillarServers, desc: t.home.pillarServersDesc, href: "/servers" },
@@ -252,53 +302,6 @@ export default function HomePage() {
           ))}
         </div>
       </section>
-
-      {mode === "expert" ? (
-        <section className="holo-panel rounded-[2rem] p-6">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <Badge tone="warning">{t.home.expertTelemetry}</Badge>
-              <h2 className="font-display mt-3 text-3xl font-semibold tracking-tight">{t.home.expertSnapshot}</h2>
-            </div>
-            <Link href="/servers?sort=online" className="text-sm text-primary hover:text-fg">
-              {t.home.openServerMatrix} →
-            </Link>
-          </div>
-          <div className="mt-6 overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-sm">
-              <thead className="text-xs uppercase tracking-[0.18em] text-fg-muted">
-                <tr>
-                  <th className="py-3">{t.home.expertWorld}</th>
-                  <th className="py-3">{t.nav.games}</th>
-                  <th className="py-3">{t.common.mode}</th>
-                  <th className="py-3">{t.common.region}</th>
-                  <th className="py-3 text-right">{t.servers.sortOnline}</th>
-                  <th className="py-3 text-right">{t.home.expertLoad}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/10">
-                {sourceServers.slice(0, 8).map((server) => {
-                  const load = server.maxPlayers > 0 ? Math.round((server.online / server.maxPlayers) * 100) : 0;
-                  return (
-                    <tr key={server.id} className="text-fg-muted">
-                      <td className="py-3">
-                        <Link href={server.href} className="font-medium text-fg hover:text-primary">
-                          {server.name}
-                        </Link>
-                      </td>
-                      <td className="py-3">{gameLabel(server.game)}</td>
-                      <td className="py-3">{humanizeSlug(server.mode)}</td>
-                      <td className="py-3">{humanizeSlug(server.region ?? t.common.global)}</td>
-                      <td className="py-3 text-right">{server.online}/{server.maxPlayers}</td>
-                      <td className="py-3 text-right">{load}%</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      ) : null}
 
       <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <EcosystemRadarPanel

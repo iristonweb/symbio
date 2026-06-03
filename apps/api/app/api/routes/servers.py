@@ -22,7 +22,7 @@ async def list_servers_route(
     game: str | None = Query(default=None),
     project_id: UUID | None = Query(default=None),
     sort: str = Query(default="online", pattern="^(online|rating|votes|rank|new|top_online)$"),
-    fresh_minutes: int = Query(default=60, ge=0, le=180),
+    fresh_minutes: int = Query(default=10080, ge=0, le=10080),
     q: str | None = Query(default=None),
     style: str | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),

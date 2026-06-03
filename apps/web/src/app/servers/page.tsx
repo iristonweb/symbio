@@ -14,6 +14,8 @@ import { FilterPanel, FilterRow } from "@/components/ui/FilterPanel";
 import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { gameLabel } from "@/lib/display-labels";
+import { ServerExpertTable } from "@/components/ui/ServerExpertTable";
+import { expertTableLabels } from "@/lib/expert-table-labels";
 
 const SORT_KEYS = ["online", "rating", "votes", "rank", "new"] as const;
 const STYLE_KEYS = ["all", "hardcore", "milsim", "pvp", "smp", "economy", "roleplay"] as const;
@@ -54,7 +56,12 @@ function ServersPageInner() {
     setLoading(true);
     setApiError(false);
     platformApi
-      .servers({ sort, q: query || undefined, style: style === "all" ? undefined : style })
+      .servers({
+        sort,
+        q: query || undefined,
+        style: style === "all" ? undefined : style,
+        limit: 100,
+      })
       .then((r) => {
         setServers(r.items);
         setApiError(false);
@@ -72,7 +79,14 @@ function ServersPageInner() {
         <div className="absolute inset-0 banner-server opacity-80" />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,5,13,0.92),rgba(3,5,13,0.52),rgba(3,5,13,0.88))]" />
         <div className="relative max-w-3xl">
-          <Badge tone="info">{t.servers.badge}</Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone="info">{t.servers.badge}</Badge>
+            {mode === "expert" ? (
+              <Badge tone="warning" title={t.mode.expertHint}>
+                {t.mode.activeLabel}
+              </Badge>
+            ) : null}
+          </div>
           <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
             {t.servers.title} <span className="text-gradient">{t.servers.titleAccent}</span>
           </h1>
@@ -119,58 +133,14 @@ function ServersPageInner() {
           ))}
         </div>
       ) : mode === "expert" ? (
-        <section className="holo-panel rounded-[2rem] p-4">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[860px] text-left text-sm">
-              <thead className="text-xs uppercase tracking-[0.18em] text-fg-muted">
-                <tr>
-                  <th className="px-3 py-3">Server</th>
-                  <th className="px-3 py-3">{t.nav.games}</th>
-                  <th className="px-3 py-3">{t.common.region}</th>
-                  <th className="px-3 py-3">{t.common.mode}</th>
-                  <th className="px-3 py-3 text-right">Online</th>
-                  <th className="px-3 py-3 text-right">Rank</th>
-                  <th className="px-3 py-3 text-right">Uptime</th>
-                  <th className="px-3 py-3 text-right">Rating</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/10">
-                {servers.map((server) => (
-                  <tr key={server.id} className="text-fg-muted hover:bg-white/5">
-                    <td className="px-3 py-3">
-                      <Link href={`/servers/${server.id}`} className="font-medium text-fg hover:text-primary">
-                        {server.name}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-3">{gameLabel(server.game)}</td>
-                    <td className="px-3 py-3">{server.region ?? "—"}</td>
-                    <td className="px-3 py-3">{server.mode ?? "—"}</td>
-                    <td className="px-3 py-3 text-right">
-                      {server.snapshot?.online ?? 0}/{server.snapshot?.max_players ?? 0}
-                    </td>
-                    <td className="px-3 py-3 text-right">{server.snapshot?.rank ?? "—"}</td>
-                    <td className="px-3 py-3 text-right">
-                      {server.snapshot?.uptime_percent != null ? `${server.snapshot.uptime_percent}%` : "—"}
-                    </td>
-                    <td className="px-3 py-3 text-right">{server.rating.toFixed(1)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {servers.length === 0 ? (
-              <div className="p-8 text-center text-fg-muted">
-                {apiError ? (
-                  <>
-                    <p className="font-medium text-fg">{t.servers.apiErrorTitle}</p>
-                    <p className="mt-2 text-sm">{t.servers.apiErrorDesc}</p>
-                  </>
-                ) : (
-                  t.servers.empty
-                )}
-              </div>
-            ) : null}
-          </div>
-        </section>
+        apiError ? (
+          <section className="holo-panel rounded-[2rem] p-8 text-center">
+            <p className="font-medium text-fg">{t.servers.apiErrorTitle}</p>
+            <p className="mt-2 text-sm text-fg-muted">{t.servers.apiErrorDesc}</p>
+          </section>
+        ) : (
+          <ServerExpertTable servers={servers} labels={expertTableLabels(t)} />
+        )
       ) : (
         <section className="grid gap-4 lg:grid-cols-2">
           {servers.map((server) => {

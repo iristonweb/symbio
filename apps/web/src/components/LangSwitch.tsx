@@ -4,12 +4,15 @@ import { useLocale } from "@/components/LocaleProvider";
 import { cn } from "@/lib/cn";
 import type { Locale } from "@/lib/i18n/translations";
 
-export function LangSwitch() {
+export function LangSwitch({ compact = false }: { compact?: boolean }) {
   const { locale, setLocale, t } = useLocale();
 
   return (
     <div
-      className="inline-flex items-center rounded-2xl border border-white/10 bg-black/30 p-1 backdrop-blur-xl"
+      className={cn(
+        "inline-flex items-center border border-white/10 bg-black/30 p-0.5 backdrop-blur-xl",
+        compact ? "rounded-full" : "rounded-2xl p-1"
+      )}
       role="group"
       aria-label={t.lang.switch}
     >
@@ -19,7 +22,8 @@ export function LangSwitch() {
           type="button"
           onClick={() => setLocale(code)}
           className={cn(
-            "h-9 rounded-xl px-3 text-xs font-medium uppercase tracking-wider transition",
+            "font-medium uppercase tracking-wider transition",
+            compact ? "h-7 rounded-full px-2 text-[10px]" : "h-9 rounded-xl px-3 text-xs",
             locale === code
               ? "bg-primary/15 text-primary border border-primary/30"
               : "text-fg-muted hover:text-fg"

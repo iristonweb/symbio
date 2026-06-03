@@ -32,6 +32,15 @@ PRIORITY_GAMES: list[tuple[str, str, str, list[str]]] = [
     ("garrys-mod", "Garry's Mod", "client", ["sandbox"]),
     ("space-engineers", "Space Engineers", "client", ["sandbox", "simulator"]),
     ("terraria", "Terraria", "client", ["sandbox"]),
+    ("palworld", "Palworld", "client", ["survival", "sandbox"]),
+    ("valheim", "Valheim", "client", ["survival"]),
+    ("left-4-dead-2", "Left 4 Dead 2", "client", ["shooter"]),
+    ("team-fortress-2", "Team Fortress 2", "client", ["shooter"]),
+    ("satisfactory", "Satisfactory", "client", ["sandbox"]),
+    ("the-forest", "The Forest", "client", ["survival"]),
+    ("sons-of-the-forest", "Sons of the Forest", "client", ["survival"]),
+    ("insurgency-sandstorm", "Insurgency: Sandstorm", "client", ["shooter"]),
+    ("hell-let-loose", "Hell Let Loose", "client", ["shooter", "simulator"]),
 ]
 
 GAME_HINTS: list[tuple[str, str]] = [
@@ -51,6 +60,18 @@ GAME_HINTS: list[tuple[str, str]] = [
     ("7 days", "7-days-to-die"),
     ("conan", "conan-exiles"),
     ("ark", "ark-survival-evolved"),
+    ("palworld", "palworld"),
+    ("valheim", "valheim"),
+    ("left 4 dead", "left-4-dead-2"),
+    ("tf2", "team-fortress-2"),
+    ("team fortress", "team-fortress-2"),
+    ("satisfactory", "satisfactory"),
+    ("the forest", "the-forest"),
+    ("sons of the forest", "sons-of-the-forest"),
+    ("insurgency", "insurgency-sandstorm"),
+    ("hell let loose", "hell-let-loose"),
+    ("cs2", "counter-strike-2"),
+    ("terraria", "terraria"),
 ]
 
 

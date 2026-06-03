@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import { fetchApi, platformApi, type ApiGame, type ApiMarketplaceProduct, type ApiProject, type ApiServer } from "@/lib/platform-api";
 import { useAuth } from "@/components/AuthProvider";
 import { useLocale } from "@/components/LocaleProvider";
+import { useUiMode } from "@/components/UiModeProvider";
+import { ServerExpertTable } from "@/components/ui/ServerExpertTable";
+import { expertTableLabels } from "@/lib/expert-table-labels";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
@@ -15,6 +18,7 @@ import { gameLabel, productTypeLabel } from "@/lib/display-labels";
 
 export default function StudioPage() {
   const { t } = useLocale();
+  const { mode } = useUiMode();
   const { user, refresh } = useAuth();
   const router = useRouter();
   const [tab, setTab] = React.useState<"dashboard" | "product" | "project" | "server">("dashboard");
@@ -245,26 +249,40 @@ export default function StudioPage() {
                 {projects.length === 0 ? <p className="text-sm text-fg-muted">{t.studio.noProjects}</p> : null}
               </div>
             </div>
-            <div className="holo-panel rounded-[2rem] p-6">
-              <div className="flex items-center justify-between gap-3">
+            <div className="holo-panel rounded-[2rem] p-6 lg:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-2xl font-semibold">{t.studio.myServers}</h2>
-                <Button size="sm" variant="premium" onClick={() => setTab("server")}>{t.studio.addServer}</Button>
+                <div className="flex items-center gap-2">
+                  {mode === "expert" ? <Badge tone="warning">{t.mode.activeLabel}</Badge> : null}
+                  <Button size="sm" variant="premium" onClick={() => setTab("server")}>{t.studio.addServer}</Button>
+                </div>
               </div>
-              <div className="mt-5 space-y-3">
-                {servers.map((server) => (
-                  <div key={server.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <Link href={`/servers/${server.id}`} className="font-medium hover:text-primary">{server.name}</Link>
-                    <div className="mt-1 flex flex-wrap gap-2 text-xs text-fg-muted">
-                      <span>{gameLabel(server.game)}</span>
-                      <span>{server.host}:{server.port}</span>
-                      <Badge tone={server.moderation_status === "approved" ? "success" : "warning"}>
-                        {moderationLabels[server.moderation_status ?? "pending"] ?? t.studio.statusPending}
-                      </Badge>
+              {mode === "expert" && servers.length > 0 ? (
+                <div className="mt-5">
+                  <ServerExpertTable
+                    servers={servers}
+                    labels={{ ...expertTableLabels(t), empty: t.studio.noServers }}
+                    showOwnerStatus
+                    moderationLabels={moderationLabels}
+                  />
+                </div>
+              ) : (
+                <div className="mt-5 space-y-3">
+                  {servers.map((server) => (
+                    <div key={server.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <Link href={`/servers/${server.id}`} className="font-medium hover:text-primary">{server.name}</Link>
+                      <div className="mt-1 flex flex-wrap gap-2 text-xs text-fg-muted">
+                        <span>{gameLabel(server.game)}</span>
+                        <span>{server.host}:{server.port}</span>
+                        <Badge tone={server.moderation_status === "approved" ? "success" : "warning"}>
+                          {moderationLabels[server.moderation_status ?? "pending"] ?? t.studio.statusPending}
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {servers.length === 0 ? <p className="text-sm text-fg-muted">{t.studio.noServers}</p> : null}
-              </div>
+                  ))}
+                  {servers.length === 0 ? <p className="text-sm text-fg-muted">{t.studio.noServers}</p> : null}
+                </div>
+              )}
             </div>
           </div>
           <div className="holo-panel rounded-[2rem] p-6">

@@ -29,7 +29,7 @@ export type ApiServer = {
   rating: number;
   votes: number;
   claim_status: string;
-  moderation_status?: string;
+  moderation_status?: string | null;
   project_id?: string | null;
   source_url?: string | null;
   snapshot?: ServerSnapshot | null;
@@ -160,12 +160,23 @@ export const platformApi = {
   },
   project: (slug: string) => fetchApi<ApiProject>(`/projects/${slug}`),
   myProjects: () => fetchApi<{ items: ApiProject[]; total: number }>("/projects/mine"),
-  servers: (params?: { game?: string; sort?: string; q?: string; style?: string }) => {
+  servers: (params?: {
+    game?: string;
+    sort?: string;
+    q?: string;
+    style?: string;
+    fresh_minutes?: number;
+    limit?: number;
+    offset?: number;
+  }) => {
     const q = new URLSearchParams();
     if (params?.game) q.set("game", params.game);
     if (params?.sort) q.set("sort", params.sort ?? "online");
     if (params?.q) q.set("q", params.q);
     if (params?.style) q.set("style", params.style);
+    q.set("fresh_minutes", String(params?.fresh_minutes ?? 10080));
+    if (params?.limit) q.set("limit", String(params.limit));
+    if (params?.offset) q.set("offset", String(params.offset));
     return fetchApi<{ items: ApiServer[] }>(`/servers?${q}`);
   },
   server: (id: string) => fetchApi<ApiServer>(`/servers/${id}`),
@@ -207,6 +218,15 @@ export const platformApi = {
     fetchApi<AuthIdentitiesInfo>("/auth/me/identities"),
   tokenWallet: () =>
     fetchApi<{ balance_tokens: number; balance_credits: number }>("/auth/me/wallet"),
+  oauthStart: (provider: "google" | "steam", options?: { link?: boolean }) => {
+    const q = options?.link ? "?link=true" : "";
+    return fetch(`${API_URL}/auth/${provider}/start${q}`, {
+      headers: { ...authHeaders() },
+    }).then(async (res) => {
+      if (!res.ok) throw new Error(`OAuth start failed: ${res.status}`);
+      return res.json() as Promise<{ url: string; state: string }>;
+    });
+  },
 };
 
 export type VoteResult = {

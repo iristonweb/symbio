@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { viewModeFromSearch } from "@/lib/ui-mode";
 
 export type UiMode = "discover" | "expert";
 
@@ -17,6 +18,12 @@ export function UiModeProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     try {
+      const fromUrl = viewModeFromSearch(window.location.search);
+      if (fromUrl) {
+        setMode(fromUrl);
+        window.localStorage.setItem("symbio.uiMode", fromUrl);
+        return;
+      }
       const stored = window.localStorage.getItem("symbio.uiMode") as UiMode | null;
       if (stored === "discover" || stored === "expert") setMode(stored);
     } catch {}

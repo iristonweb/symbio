@@ -66,9 +66,7 @@ export default function ServerProfilePage() {
   };
 
   const startOAuth = async (provider: "google" | "steam") => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    const r = await fetch(`${apiUrl}/auth/${provider}/start`);
-    const data = await r.json();
+    const data = await platformApi.oauthStart(provider, { link: true });
     window.location.href = data.url;
   };
 

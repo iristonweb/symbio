@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { platformApi, type ApiGame, type ApiServer } from "@/lib/platform-api";
 import { useLocale } from "@/components/LocaleProvider";
+import { useUiMode } from "@/components/UiModeProvider";
+import { ServerExpertTable } from "@/components/ui/ServerExpertTable";
+import { expertTableLabels } from "@/lib/expert-table-labels";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -12,6 +15,7 @@ import { categoryLabel } from "@/lib/display-labels";
 
 export default function GameDetailPage() {
   const { t } = useLocale();
+  const { mode } = useUiMode();
   const params = useParams();
   const slug = params.slug as string;
   const [game, setGame] = React.useState<ApiGame | null>(null);
@@ -52,34 +56,46 @@ export default function GameDetailPage() {
       </section>
 
       <section>
-        <h2 className="text-2xl font-semibold">{t.games.servers}</h2>
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          {servers.map((s) => (
-            <Link key={s.id} href={`/servers/${s.id}`} className="organism-panel rounded-[2rem] p-5">
-              <div className="flex justify-between">
-                <span className="font-semibold">{s.name}</span>
-                <Badge tone={s.snapshot?.status === "online" ? "success" : "neutral"}>
-                  {s.snapshot?.online ?? 0}/{s.snapshot?.max_players ?? 0}
-                </Badge>
-              </div>
-              {s.snapshot?.map ? (
-                <p className="mt-2 text-xs text-fg-muted">
-                  {t.common.map}: {s.snapshot.map}
-                </p>
-              ) : null}
-            </Link>
-          ))}
-          {servers.length === 0 ? (
-            <div className="lg:col-span-2">
-              <EmptyState
-                title={t.games.noServersTitle}
-                description={t.games.noServersDesc}
-                actionLabel={t.studio.addServer}
-                actionHref="/studio"
-              />
-            </div>
-          ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-2xl font-semibold">{t.games.servers}</h2>
+          {mode === "expert" ? <Badge tone="warning">{t.mode.activeLabel}</Badge> : null}
         </div>
+        {mode === "expert" ? (
+          <div className="mt-4">
+            <ServerExpertTable
+              servers={servers}
+              labels={{ ...expertTableLabels(t), empty: t.games.noServersTitle }}
+            />
+          </div>
+        ) : (
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            {servers.map((s) => (
+              <Link key={s.id} href={`/servers/${s.id}`} className="organism-panel rounded-[2rem] p-5">
+                <div className="flex justify-between">
+                  <span className="font-semibold">{s.name}</span>
+                  <Badge tone={s.snapshot?.status === "online" ? "success" : "neutral"}>
+                    {s.snapshot?.online ?? 0}/{s.snapshot?.max_players ?? 0}
+                  </Badge>
+                </div>
+                {s.snapshot?.map ? (
+                  <p className="mt-2 text-xs text-fg-muted">
+                    {t.common.map}: {s.snapshot.map}
+                  </p>
+                ) : null}
+              </Link>
+            ))}
+            {servers.length === 0 ? (
+              <div className="lg:col-span-2">
+                <EmptyState
+                  title={t.games.noServersTitle}
+                  description={t.games.noServersDesc}
+                  actionLabel={t.studio.addServer}
+                  actionHref="/studio"
+                />
+              </div>
+            ) : null}
+          </div>
+        )}
       </section>
     </div>
   );

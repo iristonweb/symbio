@@ -1,4 +1,4 @@
-"""OAuth helpers for Google and Steam (launch-ready stubs with dev fallbacks)."""
+"""OAuth helpers for Google and Steam (OpenID + Web API profile)."""
 
 import secrets
 from urllib.parse import urlencode
@@ -39,9 +39,12 @@ def steam_auth_url(state: str) -> str:
     return "https://steamcommunity.com/openid/login?" + urlencode(params)
 
 
-def create_oauth_state(provider: str) -> str:
+def create_oauth_state(provider: str, extra: dict | None = None) -> str:
     state = secrets.token_urlsafe(24)
-    _pending_oauth[state] = {"provider": provider}
+    payload: dict = {"provider": provider}
+    if extra:
+        payload.update(extra)
+    _pending_oauth[state] = payload
     return state
 
 
@@ -84,3 +87,35 @@ async def exchange_google_code(code: str) -> dict:
 
 def parse_steam_id_from_claimed(claimed_id: str) -> str:
     return claimed_id.rstrip("/").split("/")[-1]
+
+
+async def verify_steam_openid(params: dict[str, str]) -> bool:
+    """Validate Steam OpenID response via check_authentication."""
+    if params.get("openid.mode") != "id_res":
+        return False
+    payload = {**params, "openid.mode": "check_authentication"}
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        res = await client.post("https://steamcommunity.com/openid/login", data=payload)
+        res.raise_for_status()
+        body = res.text
+    return "is_valid:true" in body
+
+
+async def fetch_steam_profile(steam_id: str) -> dict:
+    if not settings.STEAM_API_KEY:
+        return {"personaname": f"Steam {steam_id}", "avatarfull": None}
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        res = await client.get(
+            "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/",
+            params={"key": settings.STEAM_API_KEY, "steamids": steam_id},
+        )
+        res.raise_for_status()
+        players = res.json().get("response", {}).get("players", [])
+    if not players:
+        return {"personaname": f"Steam {steam_id}", "avatarfull": None}
+    player = players[0]
+    return {
+        "personaname": player.get("personaname") or f"Steam {steam_id}",
+        "avatarfull": player.get("avatarfull"),
+        "profileurl": player.get("profileurl"),
+    }

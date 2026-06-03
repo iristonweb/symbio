@@ -435,7 +435,22 @@ async def run_import(
             if not existing and parsed.get("host") and parsed.get("port"):
                 existing = await find_server_by_host_port(db, parsed["host"], parsed["port"])
             if existing:
-                stats["skipped"] += 1
+                if not dry_run:
+                    db.add(
+                        ServerSnapshot(
+                            server_id=existing.id,
+                            online=parsed["online"],
+                            max_players=parsed["max_players"],
+                            map=parsed.get("map"),
+                            version=parsed.get("version"),
+                            status=parsed["status"],
+                            rank=parsed.get("rank"),
+                            uptime_percent=parsed.get("uptime_percent"),
+                        )
+                    )
+                    stats["servers_updated"] = stats.get("servers_updated", 0) + 1
+                else:
+                    stats["servers_updated"] = stats.get("servers_updated", 0) + 1
                 continue
 
             if dry_run:
