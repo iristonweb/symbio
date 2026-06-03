@@ -218,6 +218,9 @@ export const platformApi = {
     fetchApi<AuthIdentitiesInfo>("/auth/me/identities"),
   tokenWallet: () =>
     fetchApi<{ balance_tokens: number; balance_credits: number }>("/auth/me/wallet"),
+  steamLibrary: () => fetchApi<SteamLibraryInfo>("/auth/me/steam/library"),
+  steamLibrarySync: () =>
+    fetchApi<SteamLibraryInfo>("/auth/me/steam/library/sync", { method: "POST" }),
   oauthStart: (provider: "google" | "steam", options?: { link?: boolean }) => {
     const q = options?.link ? "?link=true" : "";
     return fetch(`${API_URL}/auth/${provider}/start${q}`, {
@@ -259,4 +262,26 @@ export type AuthIdentitiesInfo = {
   social_providers: string[];
   vote_multiplier: number;
   email_verified: boolean;
+};
+
+export type SteamOwnedGame = {
+  appid: number;
+  name: string;
+  playtime_forever: number;
+  playtime_2weeks: number;
+  img_icon_url: string | null;
+  symbio_slug: string | null;
+  symbio_matched: boolean;
+};
+
+export type SteamLibraryInfo = {
+  linked: boolean;
+  steam_id: string | null;
+  synced_at: string | null;
+  visibility: string | null;
+  game_count: number;
+  matched_count: number;
+  matched_slugs: string[];
+  games: SteamOwnedGame[];
+  symbio_games: { slug: string; title: string; server_count: number; cover_url?: string | null }[];
 };

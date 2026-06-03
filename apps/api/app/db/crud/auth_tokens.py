@@ -62,6 +62,26 @@ async def list_identities_for_user(db: AsyncSession, user_id: UUID) -> list[Auth
     ).scalars().all()
 
 
+async def get_user_provider_identity(
+    db: AsyncSession, user_id: UUID, provider: str
+) -> AuthIdentity | None:
+    return (
+        await db.execute(
+            select(AuthIdentity).where(
+                AuthIdentity.user_id == user_id,
+                AuthIdentity.provider == provider,
+            )
+        )
+    ).scalar_one_or_none()
+
+
+async def merge_identity_meta(db: AsyncSession, identity: AuthIdentity, patch: dict) -> AuthIdentity:
+    merged = {**(identity.meta or {}), **patch}
+    identity.meta = merged
+    await db.flush()
+    return identity
+
+
 async def link_identity(
     db: AsyncSession,
     user_id: UUID,

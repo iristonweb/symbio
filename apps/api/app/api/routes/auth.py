@@ -18,6 +18,7 @@ from app.db.models.user import User
 from app.services.email_service import send_email, verification_email_link
 from app.services.nickname import sanitize_nickname
 from app.services import oauth_service
+from app.services import steam_library
 
 router = APIRouter()
 
@@ -149,6 +150,67 @@ async def me_identities(user: User = Depends(get_current_user), db: AsyncSession
         "vote_multiplier": multiplier,
         "email_verified": user.email_verified,
     }
+
+
+async def _steam_library_for_user(db: AsyncSession, user: User, *, force_refresh: bool = False) -> dict:
+    identity = await tokens_crud.get_user_provider_identity(db, user.id, "steam")
+    if not identity:
+        return {
+            "linked": False,
+            "steam_id": None,
+            "synced_at": None,
+            "visibility": None,
+            "game_count": 0,
+            "matched_count": 0,
+            "matched_slugs": [],
+            "games": [],
+            "symbio_games": [],
+        }
+
+    from app.db.crud.games import get_game_by_slug
+
+    doc = await steam_library.build_library_payload(
+        identity.provider_user_id,
+        cached_meta=identity.meta,
+        force_refresh=force_refresh,
+    )
+    meta_patch = doc.pop("_meta_patch", None)
+    if meta_patch:
+        await tokens_crud.merge_identity_meta(db, identity, meta_patch)
+
+    symbio_games = []
+    for slug in doc.get("matched_slugs") or []:
+        game = await get_game_by_slug(db, slug)
+        if game:
+            symbio_games.append(
+                {
+                    "slug": game.slug,
+                    "title": game.title,
+                    "server_count": game.server_count,
+                    "cover_url": game.cover_url,
+                }
+            )
+
+    doc["linked"] = True
+    doc["symbio_games"] = symbio_games
+    return doc
+
+
+@router.get("/me/steam/library")
+async def me_steam_library(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    payload = await _steam_library_for_user(db, user, force_refresh=False)
+    await db.commit()
+    return payload
+
+
+@router.post("/me/steam/library/sync")
+async def sync_steam_library(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    identity = await tokens_crud.get_user_provider_identity(db, user.id, "steam")
+    if not identity:
+        raise HTTPException(status_code=400, detail="Steam account not linked")
+    payload = await _steam_library_for_user(db, user, force_refresh=True)
+    await db.commit()
+    return payload
 
 
 @router.get("/me/wallet")
@@ -299,8 +361,12 @@ async def _oauth_login(db: AsyncSession, provider: str, profile: dict, link_user
                 profile.get("email"),
                 meta,
             )
+        elif existing.user_id == user.id and meta:
+            await tokens_crud.merge_identity_meta(db, existing, meta)
         if profile.get("name") and not user.display_name:
             user.display_name = profile["name"]
+        if provider == "steam":
+            await _sync_steam_library_on_login(db, user)
         await users_crud.touch_login(db, user)
         await db.commit()
         token = create_access_token(subject=user.email, roles=user.roles or ["user"])
@@ -329,9 +395,31 @@ async def _oauth_login(db: AsyncSession, provider: str, profile: dict, link_user
         )
     if not user or not user.is_active:
         raise HTTPException(status_code=403, detail="Account disabled")
+    if provider == "steam":
+        if meta:
+            steam_identity = await tokens_crud.get_user_provider_identity(db, user.id, "steam")
+            if steam_identity:
+                await tokens_crud.merge_identity_meta(db, steam_identity, meta)
+        await _sync_steam_library_on_login(db, user)
     await users_crud.touch_login(db, user)
     await db.commit()
     token = create_access_token(subject=user.email, roles=user.roles or ["user"])
     from app.core.config import settings
 
     return RedirectResponse(f"{settings.WEB_BASE_URL}/auth/oauth-callback?token={token}")
+
+
+async def _sync_steam_library_on_login(db: AsyncSession, user: User) -> None:
+    identity = await tokens_crud.get_user_provider_identity(db, user.id, "steam")
+    if not identity:
+        return
+    try:
+        doc = await steam_library.build_library_payload(
+            identity.provider_user_id,
+            cached_meta=identity.meta,
+            force_refresh=True,
+        )
+        if doc.get("_meta_patch"):
+            await tokens_crud.merge_identity_meta(db, identity, doc["_meta_patch"])
+    except Exception:
+        return
