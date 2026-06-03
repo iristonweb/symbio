@@ -16,35 +16,15 @@ export function SpotlightBackground({ className }: { className?: string }) {
 
   return (
     <div className={cn("pointer-events-none fixed inset-0 -z-10 overflow-hidden", className)}>
-      {/* Base gradients */}
-      <div
-        className="absolute inset-0 hidden dark:block"
-        style={{
-          background: `
-            radial-gradient(900px circle at 40% -10%, rgb(var(--primary) / 0.14), transparent 55%),
-            radial-gradient(900px circle at 110% 25%, rgb(var(--gold) / 0.1), transparent 60%),
-            radial-gradient(900px circle at 30% 120%, rgb(var(--violet) / 0.08), transparent 60%),
-            linear-gradient(180deg, rgb(var(--bg)), rgb(4 6 10))
-          `,
-        }}
-      />
-      <div
-        className="absolute inset-0 block dark:hidden"
-        style={{
-          background: `
-            radial-gradient(900px circle at 40% -10%, rgb(var(--primary) / 0.12), transparent 55%),
-            radial-gradient(900px circle at 110% 25%, rgb(var(--gold) / 0.08), transparent 60%),
-            linear-gradient(180deg, rgb(var(--bg)), rgb(240 244 250))
-          `,
-        }}
-      />
+      <div className="absolute inset-0 ecosystem-backdrop opacity-80" />
+      <div className="absolute inset-0 bg-[radial-gradient(900px_circle_at_50%_-10%,rgba(62,240,255,0.14),transparent_60%),linear-gradient(180deg,rgba(3,5,13,0.18),rgba(3,5,13,0.96)_76%)]" />
 
       {/* Interactive spotlight */}
       <div
         className="absolute inset-0 opacity-90 transition-opacity duration-300"
         style={{
           background:
-            "radial-gradient(720px circle at var(--mx, 50%) var(--my, 50%), rgb(var(--primary) / 0.12), rgb(var(--gold) / 0.06), transparent 65%)",
+            "radial-gradient(840px circle at var(--mx, 50%) var(--my, 50%), rgb(var(--primary) / 0.16), rgb(var(--violet) / 0.08), transparent 65%)",
         }}
       />
 
@@ -56,7 +36,7 @@ export function SpotlightBackground({ className }: { className?: string }) {
       </div>
 
       {/* Grid */}
-      <div className="absolute inset-0 cyber-grid opacity-40" />
+      <div className="absolute inset-0 ecosystem-grid opacity-55" />
 
       {/* Scanlines */}
       <div className="absolute inset-0 scanlines" />

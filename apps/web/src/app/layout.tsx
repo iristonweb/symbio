@@ -5,9 +5,9 @@ import { Shell } from "@/components/Shell";
 import { UiModeProvider } from "@/components/UiModeProvider";
 
 export const metadata: Metadata = {
-  title: "SYMBIO — UGC Marketplace & Server Hub",
+  title: "SYMBIO — Living Gaming Ecosystem",
   description:
-    "Futuristic immersive platform: marketplace mods, server hub, creator studio with one-click install.",
+    "Premium immersive gaming ecosystem for living server worlds, player recommendations and owner analytics.",
 };
 
 export default function RootLayout({

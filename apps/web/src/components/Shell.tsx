@@ -14,11 +14,12 @@ import { SpotlightBackground } from "@/components/immersive/SpotlightBackground"
 import { CommandPalette } from "@/components/immersive/CommandPalette";
 
 const NAV = [
-  { href: "/", label: "Home" },
-  { href: "/marketplace", label: "Marketplace" },
-  { href: "/servers", label: "Servers" },
-  { href: "/studio", label: "Studio" },
-  { href: "/docs", label: "Docs" },
+  { href: "/", label: "Ecosystem" },
+  { href: "/servers", label: "Worlds" },
+  { href: "/servers/neon-frontier", label: "Live Profile" },
+  { href: "/studio", label: "Add Server" },
+  { href: "/admin/dashboard", label: "Command" },
+  { href: "/profile", label: "Profile" },
 ];
 
 function ThemeToggle() {
@@ -48,7 +49,7 @@ function ThemeToggle() {
 
 function NavLink({ href, label }: { href: string; label: string }) {
   const pathname = usePathname();
-  const active = pathname === href;
+  const active = pathname === href || (href !== "/" && pathname.startsWith(href));
 
   return (
     <Link
@@ -73,15 +74,17 @@ function NavLink({ href, label }: { href: string; label: string }) {
 function Brand() {
   return (
     <div className="flex items-center gap-3">
-      <div className="relative h-10 w-10">
-        <div className="absolute inset-0 rounded-2xl bg-[linear-gradient(135deg,rgb(var(--primary)),rgb(var(--gold)))] opacity-90 blur-[0px]" />
-        <div className="absolute inset-0 grid place-items-center rounded-2xl border border-white/15 bg-black/30 text-xs font-bold text-fg">
-          S
-        </div>
+      <div className="relative h-11 w-11">
+        <div className="absolute inset-0 rounded-full bg-[conic-gradient(from_180deg,rgb(var(--primary)),rgb(var(--violet)),rgb(var(--accent)),rgb(var(--primary)))] opacity-80 blur-sm" />
+        <div className="absolute inset-1 rounded-full border border-white/15 bg-black/50" />
+        <div className="absolute inset-[11px] rounded-full bg-primary shadow-[0_0_26px_rgb(var(--primary)_/_0.85)]" />
+        <div className="absolute inset-0 rounded-full border border-primary/20 orbit-ring" />
       </div>
       <div className="leading-tight">
-        <div className="text-sm font-semibold tracking-tight">SYMBIO</div>
-        <div className="text-[11px] text-fg-muted">UGC • Servers • Studio</div>
+        <div className="text-sm font-semibold tracking-[0.28em]">SYMBIO</div>
+        <div className="text-[10px] uppercase tracking-[0.22em] text-fg-muted">
+          living worlds network
+        </div>
       </div>
     </div>
   );
@@ -119,7 +122,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         className={cn(
           "sticky top-0 z-50 transition duration-300",
           scrolled
-            ? "border-b border-white/10 bg-bg/80 shadow-glass backdrop-blur-2xl"
+            ? "border-b border-white/10 bg-[rgba(3,5,13,0.78)] shadow-glass backdrop-blur-2xl"
             : "border-b border-transparent bg-transparent"
         )}
       >
@@ -131,7 +134,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <Brand />
           </Link>
 
-          <nav className="hidden items-center gap-0.5 rounded-2xl border border-white/10 bg-white/5 p-1 backdrop-blur-xl lg:flex">
+          <nav className="hidden items-center gap-0.5 rounded-full border border-white/10 bg-black/30 p-1.5 backdrop-blur-xl lg:flex">
             {NAV.map((n) => (
               <NavLink key={n.href} href={n.href} label={n.label} />
             ))}
@@ -144,7 +147,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
             <button
               type="button"
-              className="hidden items-center gap-1.5 rounded-2xl border border-white/10 bg-white/5 px-2.5 py-2 text-xs text-fg-muted transition hover:bg-white/10 sm:inline-flex"
+              className="hidden items-center gap-1.5 rounded-full border border-white/10 bg-black/30 px-2.5 py-2 text-xs text-fg-muted transition hover:bg-white/10 sm:inline-flex"
               onClick={() => {
                 window.dispatchEvent(
                   new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true })
@@ -206,20 +209,20 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <div className="flex flex-wrap items-center justify-between gap-6">
             <div className="flex items-center gap-2 text-sm text-fg-muted">
               <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_12px_rgb(var(--primary))]" />
-              SYMBIO — immersive UGC platform
+              SYMBIO — premium living ecosystem for competitive worlds
             </div>
             <div className="flex flex-wrap gap-4 text-sm text-fg-muted">
-              <Link href="/marketplace" className="hover:text-fg">
-                Marketplace
-              </Link>
               <Link href="/servers" className="hover:text-fg">
-                Servers
+                Worlds
               </Link>
               <Link href="/studio" className="hover:text-fg">
-                Studio
+                Add server
               </Link>
-              <Link href="/docs" className="hover:text-fg">
-                Docs
+              <Link href="/admin/dashboard" className="hover:text-fg">
+                Command
+              </Link>
+              <Link href="/profile" className="hover:text-fg">
+                Profile
               </Link>
             </div>
           </div>

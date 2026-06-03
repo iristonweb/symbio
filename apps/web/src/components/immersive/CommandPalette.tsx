@@ -13,13 +13,13 @@ type Action = {
 };
 
 const ACTIONS: Action[] = [
-  { label: "Home", kbd: "H", href: "/" },
-  { label: "Marketplace", kbd: "M", href: "/marketplace", hint: "Browse mods & assets" },
-  { label: "Servers", kbd: "S", href: "/servers", hint: "Discover servers & packs" },
-  { label: "Creator Studio", kbd: "C", href: "/studio", hint: "Upload & manage releases" },
-  { label: "Docs", kbd: "D", href: "/docs", hint: "Roadmap & product notes" },
-  { label: "Audit", kbd: "A", href: "/admin/audit", hint: "Admin audit log" },
-  { label: "Sign in", href: "/auth/login" },
+  { label: "Ecosystem command center", kbd: "E", href: "/", hint: "Hero, radar, live organisms" },
+  { label: "Worlds listing", kbd: "W", href: "/servers", hint: "Search and filter living servers" },
+  { label: "Neon Frontier profile", kbd: "N", href: "/servers/neon-frontier", hint: "Rich media, lore, stats, events" },
+  { label: "Add server", kbd: "A", href: "/studio", hint: "Create project and publish world" },
+  { label: "Admin command dashboard", kbd: "D", href: "/admin/dashboard", hint: "Analytics, retention, votes" },
+  { label: "Player profile", kbd: "P", href: "/profile", hint: "Recommendations and community snapshot" },
+  { label: "Audit log", href: "/admin/audit", hint: "Admin audit events" },
 ];
 
 export function CommandPalette() {

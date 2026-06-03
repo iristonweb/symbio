@@ -3,303 +3,237 @@
 import Link from "next/link";
 import * as React from "react";
 import { motion } from "framer-motion";
-import { useUiMode } from "@/components/UiModeProvider";
+import { ecosystemServers, activityFeed, seasonEvents } from "@/lib/ecosystem";
 import { HeroSceneDynamic } from "@/components/immersive/HeroSceneDynamic";
-import { GlowCard } from "@/components/immersive/GlowCard";
-import { MotionItem } from "@/components/immersive/MotionSection";
+import { OrganismPanel, MetricCapsule, PulseOrb } from "@/components/immersive/OrganismPanel";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Kbd } from "@/components/ui/Kbd";
-import { SectionTitle } from "@/components/ui/SectionTitle";
-import { cn } from "@/lib/cn";
 
-type Health = { ok: boolean; service: string; time: string };
-type TopServer = {
-  id: string;
-  name: string;
-  game: string;
-  region: string;
-  online: number;
-  max_players: number;
-  rating: number;
-};
-
-const MODULES = [
-  {
-    title: "Marketplace",
-    desc: "Моды, ретекстуры, 3D, карты, шейдеры — версии, лицензии, превью.",
-    href: "/marketplace",
-    tag: "UGC",
-    tone: "info" as const,
-  },
-  {
-    title: "Server Hub",
-    desc: "Топ онлайн, тренды, рейтинги, антифрод и верификация серверов.",
-    href: "/servers",
-    tag: "Live",
-    tone: "success" as const,
-  },
-  {
-    title: "Creator Studio",
-    desc: "Загрузки, версии, аналитика, промо и выплаты — в одном месте.",
-    href: "/studio",
-    tag: "Pro",
-    tone: "info" as const,
-  },
-  {
-    title: "Collections",
-    desc: "Наборы модов с зависимостями, конфликтами и быстрым откатом.",
-    href: "/marketplace",
-    tag: "Packs",
-    tone: "neutral" as const,
-  },
-  {
-    title: "Academy",
-    desc: "Гайды hardcore-уровня + стандарты качества и разборы.",
-    href: "/docs",
-    tag: "Learn",
-    tone: "neutral" as const,
-  },
-  {
-    title: "Mod Manager",
-    desc: "One-click install, update, rollback, conflict resolver.",
-    href: "/docs",
-    tag: "Desktop",
-    tone: "neutral" as const,
-  },
-];
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 18 },
-  show: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: 0.04 + i * 0.07, duration: 0.55, ease: [0.22, 1, 0.36, 1] as const },
-  }),
-};
+const playstyles = ["Hardcore", "MilSim", "PvP", "SMP", "Economy", "Roleplay"];
 
 export default function HomePage() {
-  const { mode } = useUiMode();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-
-  const [health, setHealth] = React.useState<Health | null>(null);
-  const [top, setTop] = React.useState<TopServer[]>([]);
-  const [q, setQ] = React.useState("");
+  const [query, setQuery] = React.useState("");
+  const [selected, setSelected] = React.useState("Hardcore");
+  const [apiOnline, setApiOnline] = React.useState(false);
 
   React.useEffect(() => {
     let mounted = true;
     fetch(`${apiUrl}/health`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data) => mounted && setHealth(data))
-      .catch(() => mounted && setHealth(null));
-    fetch(`${apiUrl}/servers/top_online?limit=5`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data) => mounted && setTop(Array.isArray(data) ? data : []))
-      .catch(() => mounted && setTop([]));
+      .then((r) => mounted && setApiOnline(r.ok))
+      .catch(() => mounted && setApiOnline(false));
     return () => {
       mounted = false;
     };
   }, [apiUrl]);
 
-  const filtered = React.useMemo(() => {
-    const s = q.trim().toLowerCase();
-    if (!s) return top;
-    return top.filter((x) => `${x.name} ${x.game} ${x.region}`.toLowerCase().includes(s));
-  }, [q, top]);
+  const filtered = ecosystemServers.filter((server) => {
+    const haystack = `${server.name} ${server.game} ${server.region} ${server.playstyle.join(" ")}`.toLowerCase();
+    return haystack.includes(query.toLowerCase());
+  });
 
   return (
-    <div className="space-y-16 pb-8">
-      {/* Hero */}
-      <section className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-10">
-        <motion.div initial="hidden" animate="show" className="space-y-6">
-          <motion.div variants={fadeUp} custom={0}>
-            <Badge tone={health?.ok ? "success" : "danger"}>
-              {health?.ok ? "API online" : "API offline"}
-            </Badge>
-            <Badge tone="info" className="ml-2">
-              Immersive v2
-            </Badge>
-          </motion.div>
+    <div className="space-y-20 pb-14">
+      <section className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-black/20">
+        <div className="absolute inset-0 ecosystem-backdrop opacity-90" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,5,13,0.92),rgba(3,5,13,0.42)_55%,rgba(3,5,13,0.88))]" />
+        <div className="absolute inset-0 ecosystem-grid opacity-60" />
+        <div className="absolute inset-0 scan-beam overflow-hidden opacity-80" />
 
-          <motion.h1
-            variants={fadeUp}
-            custom={1}
-            className="text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl"
+        <div className="relative grid min-h-[680px] gap-8 p-5 sm:p-8 lg:grid-cols-[1fr_0.9fr] lg:p-12">
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="flex flex-col justify-center"
           >
-            One-click mods.
-            <span className="block text-gradient">Real server stats.</span>
-            <span className="block text-fg-muted text-3xl sm:text-4xl lg:text-5xl font-medium mt-1">
-              Creator economy.
-            </span>
-          </motion.h1>
-
-          <motion.p variants={fadeUp} custom={2} className="max-w-xl text-[15px] leading-7 text-fg-muted">
-            SYMBIO объединяет marketplace модов, server hub и creator studio — чтобы игроки ставили
-            контент безопасно, а авторы зарабатывали прозрачно.
-          </motion.p>
-
-          <motion.div variants={fadeUp} custom={3} className="flex flex-wrap items-center gap-3">
-            <Link href="/servers">
-              <Button size="lg">Explore Servers</Button>
-            </Link>
-            <Link href="/auth/register">
-              <Button size="lg" variant="outline">
-                Become a Creator
-              </Button>
-            </Link>
-            <span className="text-xs text-fg-muted">
-              <Kbd>Ctrl</Kbd>+<Kbd>K</Kbd> command palette
-            </span>
-          </motion.div>
-
-          <motion.div variants={fadeUp} custom={4} className="flex flex-wrap gap-2">
-            {["Postgres", "Redis", "Meilisearch", "MinIO", "FastAPI", "Next.js"].map((t) => (
-              <span
-                key={t}
-                className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-fg-muted"
-              >
-                {t}
+            <div className="flex flex-wrap gap-2">
+              <Badge tone={apiOnline ? "success" : "danger"}>{apiOnline ? "network alive" : "api sleeping"}</Badge>
+              <Badge tone="info">symbiosis of worlds</Badge>
+            </div>
+            <h1 className="mt-6 max-w-4xl text-5xl font-semibold leading-[0.95] tracking-tight text-fg sm:text-7xl lg:text-8xl">
+              Servers are no longer lists.
+              <span className="block bg-gradient-to-r from-cyan-200 via-lime-200 to-fuchsia-300 bg-clip-text text-transparent">
+                They are living worlds.
               </span>
-            ))}
+            </h1>
+            <p className="mt-6 max-w-2xl text-base leading-8 text-fg-muted sm:text-lg">
+              SYMBIO turns every game server into an organism with pulse, mood, faction power,
+              stability, wipe countdown, community energy and player-fit recommendations.
+            </p>
+
+            <div className="mt-8 max-w-3xl rounded-[2rem] border border-white/10 bg-black/45 p-3 backdrop-blur-2xl">
+              <div className="flex flex-col gap-3 lg:flex-row">
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search by world, faction, mood, playstyle..."
+                  className="h-14 rounded-[1.4rem] border-white/10 bg-white/8 text-base"
+                />
+                <Link href="/servers">
+                  <Button className="h-14 w-full rounded-[1.4rem] px-6 lg:w-auto">Open radar</Button>
+                </Link>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {playstyles.map((style) => (
+                  <button
+                    key={style}
+                    type="button"
+                    onClick={() => setSelected(style)}
+                    className={
+                      selected === style
+                        ? "rounded-full border border-primary/50 bg-primary/15 px-3 py-1.5 text-xs text-primary"
+                        : "rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-fg-muted hover:bg-white/10"
+                    }
+                  >
+                    {style}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-8 grid max-w-3xl gap-3 sm:grid-cols-3">
+              <MetricCapsule label="living worlds" value="4.8K" hint="tracked organisms" />
+              <MetricCapsule label="community pulse" value="91%" hint="weighted activity" />
+              <MetricCapsule label="avg match fit" value="84%" hint={`${selected} recommendations`} />
+            </div>
           </motion.div>
-        </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.7, delay: 0.15 }}
-        >
-          <HeroSceneDynamic className="h-full min-h-[300px] lg:min-h-[380px]" />
-        </motion.div>
-      </section>
-
-      {/* Cockpit */}
-      <section className="grid gap-4 lg:grid-cols-3">
-        <GlowCard className="p-5" delay={0}>
-          <div className="text-xs text-fg-muted">Live status</div>
-          <div className="mt-2 flex items-center justify-between">
-            <span className="text-sm font-medium truncate">{apiUrl}</span>
-            <Badge tone={health?.ok ? "success" : "danger"}>
-              {health?.ok ? "Healthy" : "Offline"}
-            </Badge>
-          </div>
-        </GlowCard>
-        <GlowCard className="p-5" delay={0.05}>
-          <div className="text-xs text-fg-muted">Interface mode</div>
-          <div className="mt-2 text-sm font-medium">
-            {mode === "discover" ? "Discover UI" : "Expert UI"}
-          </div>
-          <p className="mt-1 text-xs text-fg-muted">Переключатель в хедере меняет плотность данных.</p>
-        </GlowCard>
-        <GlowCard className="p-5" delay={0.1}>
-          <div className="text-xs text-fg-muted">Servers tracked</div>
-          <div className="mt-2 text-2xl font-semibold text-gradient">{top.length}</div>
-          <p className="mt-1 text-xs text-fg-muted">Live snapshots from API</p>
-        </GlowCard>
-      </section>
-
-      {/* Modules bento */}
-      <section>
-        <SectionTitle
-          title="Core modules"
-          subtitle="Навигация по ключевым частям платформы — hover для glow."
-        />
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {MODULES.map((m, i) => (
-            <Link key={m.title} href={m.href} className="block">
-              <GlowCard className="h-full p-5" delay={i * 0.04} interactive>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="text-base font-semibold">{m.title}</div>
-                  <Badge tone={m.tone}>{m.tag}</Badge>
-                </div>
-                <p className="mt-2 text-sm text-fg-muted">{m.desc}</p>
-                <div className="mt-4 inline-flex items-center gap-1 text-sm text-primary">
-                  Open <span className="transition group-hover:translate-x-0.5">→</span>
-                </div>
-              </GlowCard>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Top servers */}
-      <section>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <SectionTitle
-            title="Top online right now"
-            subtitle="Демоданные после init_db."
-          />
-          <div className="w-full sm:w-72">
-            <Input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search servers…"
-            />
-          </div>
-        </div>
-
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {filtered.length === 0 ? (
-            <GlowCard className="p-6 sm:col-span-2 lg:col-span-5">
-              <p className="text-sm text-fg-muted">
-                Пока пусто. Проверь API и init_db.
-              </p>
-            </GlowCard>
-          ) : (
-            filtered.map((s, i) => (
-              <GlowCard key={s.id} className="p-4" delay={i * 0.03}>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="text-sm font-semibold leading-snug">{s.name}</div>
-                  <Badge tone="info">{s.game}</Badge>
-                </div>
-                <div className="mt-2 text-xs text-fg-muted">{s.region}</div>
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-sm">
-                    <span className="font-semibold">{s.online}</span>
-                    <span className="text-fg-muted">/{s.max_players}</span>
-                  </span>
-                </div>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/8">
-                  <div
-                    className="h-full bg-primary transition"
-                    style={{
-                      width: `${Math.min(100, Math.round((s.online / Math.max(1, s.max_players)) * 100))}%`,
-                    }}
-                  />
-                </div>
-                <div className="mt-2 text-xs text-fg-muted">
-                  rating <span className="text-fg">{s.rating.toFixed(2)}</span>
-                </div>
-              </GlowCard>
-            ))
-          )}
-        </div>
-      </section>
-
-      {/* Expert panel */}
-      {mode === "expert" ? (
-        <MotionItem index={0}>
-          <GlowCard className="p-6">
-            <SectionTitle title="Expert quick panel" subtitle="Copy/paste friendly endpoints" />
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              {[
-                ["Health", `${apiUrl}/health`],
-                ["Top online", `${apiUrl}/servers/top_online?limit=10`],
-                ["Swagger", `${apiUrl}/docs`],
-              ].map(([label, url]) => (
-                <div
-                  key={label}
-                  className="rounded-2xl border border-white/10 bg-black/20 p-4"
-                >
-                  <div className="text-xs text-fg-muted">{label}</div>
-                  <div className="mt-2 font-mono text-xs break-all text-fg">{url}</div>
+          <div className="relative min-h-[460px]">
+            <HeroSceneDynamic className="absolute inset-x-0 top-0 h-[330px] lg:h-[390px]" />
+            <div className="absolute bottom-0 left-0 right-0 grid gap-3 sm:grid-cols-2">
+              {ecosystemServers.slice(0, 2).map((server, index) => (
+                <div key={server.id} className="organism-panel rounded-[1.8rem] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold">{server.name}</div>
+                      <div className="mt-1 text-[11px] uppercase tracking-[0.2em] text-fg-muted">
+                        {server.mood}
+                      </div>
+                    </div>
+                    <PulseOrb value={server.pulse} accent={server.accent} size="sm" />
+                  </div>
                 </div>
               ))}
             </div>
-          </GlowCard>
-        </MotionItem>
-      ) : null}
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="holo-panel relative overflow-hidden rounded-[2rem] p-6">
+          <div className="absolute inset-0 ecosystem-grid opacity-60" />
+          <div className="relative">
+            <Badge tone="info">ecosystem radar</Badge>
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight">World map is a living bioscan</h2>
+            <p className="mt-3 text-sm leading-7 text-fg-muted">
+              Servers orbit by energy, stability and player pressure. Hovering a world reveals hidden stats:
+              faction dominance, season state, wipe pressure and community velocity.
+            </p>
+            <div className="relative mx-auto mt-8 aspect-square max-w-[440px] rounded-full border border-primary/20 bg-black/30">
+              <div className="absolute inset-8 rounded-full border border-white/10" />
+              <div className="absolute inset-20 rounded-full border border-white/10" />
+              <div className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary shadow-[0_0_28px_rgb(var(--primary))]" />
+              {ecosystemServers.map((server, index) => {
+                const coords = [
+                  "left-[18%] top-[22%]",
+                  "right-[18%] top-[30%]",
+                  "left-[28%] bottom-[18%]",
+                  "right-[27%] bottom-[22%]",
+                ][index];
+                return (
+                  <Link
+                    key={server.id}
+                    href={`/servers/${server.id}`}
+                    className={`absolute ${coords} group`}
+                  >
+                    <span className="absolute inset-0 h-8 w-8 animate-ping rounded-full bg-primary/20" />
+                    <span className="relative block h-8 w-8 rounded-full border border-white/20 bg-black/70 shadow-[0_0_22px_rgb(var(--primary)_/_0.45)]" />
+                    <span className="absolute left-9 top-1 hidden whitespace-nowrap rounded-full border border-white/10 bg-black/70 px-3 py-1 text-xs text-fg group-hover:block">
+                      {server.name}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <div>
+              <Badge tone="success">featured organisms</Badge>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight">Recommended by playstyle</h2>
+            </div>
+            <Link href="/servers" className="hidden text-sm text-primary hover:text-fg sm:block">
+              View all worlds →
+            </Link>
+          </div>
+          <div className="grid gap-4">
+            {filtered.slice(0, 2).map((server, index) => (
+              <OrganismPanel key={server.id} server={server} index={index} compact />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-3">
+        <div className="holo-panel rounded-[2rem] p-6 lg:col-span-2">
+          <Badge tone="warning">season timeline</Badge>
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight">Wipe pressure and event markers</h2>
+          <div className="mt-8 space-y-5">
+            {seasonEvents.map((event) => (
+              <div key={event.label}>
+                <div className="flex items-center justify-between text-sm">
+                  <span>{event.label}</span>
+                  <span className="text-fg-muted">{event.time}</span>
+                </div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/8">
+                  <div className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-lime-300 to-fuchsia-400" style={{ width: `${event.progress}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="holo-panel rounded-[2rem] p-6">
+          <Badge tone="info">community feed</Badge>
+          <h2 className="mt-4 text-2xl font-semibold tracking-tight">Live nervous system</h2>
+          <div className="mt-5 space-y-3">
+            {activityFeed.map((item) => (
+              <div key={item} className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-fg-muted">
+                <span className="mr-2 inline-block h-2 w-2 rounded-full bg-accent shadow-[0_0_16px_rgb(var(--accent))]" />
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="banner-control overflow-hidden rounded-[2.5rem] border border-white/10 p-6 sm:p-10">
+        <div className="max-w-2xl">
+          <Badge tone="info">owner command preview</Badge>
+          <h2 className="mt-4 text-4xl font-semibold tracking-tight">
+            Admin analytics that feel like a control room.
+          </h2>
+          <p className="mt-4 text-sm leading-7 text-fg-muted">
+            Track conversion, vote velocity, retention, activity heatmaps and faction pressure. Not a spreadsheet:
+            a command layer for growing competitive communities.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link href="/admin/dashboard">
+              <Button>Open command dashboard</Button>
+            </Link>
+            <Link href="/studio">
+              <Button variant="outline">Add server</Button>
+            </Link>
+            <Link href="/profile">
+              <Button variant="secondary">Join community</Button>
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
