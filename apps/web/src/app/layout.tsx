@@ -8,6 +8,11 @@ export const metadata: Metadata = {
   title: "SYMBIO — Living Gaming Ecosystem",
   description:
     "Premium immersive gaming ecosystem for living server worlds, player recommendations and owner analytics.",
+  icons: {
+    icon: "/symbio-logo.png",
+    shortcut: "/symbio-logo.png",
+    apple: "/symbio-logo.png",
+  },
 };
 
 export default function RootLayout({

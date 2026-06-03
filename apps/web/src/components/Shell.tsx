@@ -74,11 +74,15 @@ function NavLink({ href, label }: { href: string; label: string }) {
 function Brand() {
   return (
     <div className="flex items-center gap-3">
-      <div className="relative h-11 w-11">
-        <div className="absolute inset-0 rounded-full bg-[conic-gradient(from_180deg,rgb(var(--primary)),rgb(var(--violet)),rgb(var(--accent)),rgb(var(--primary)))] opacity-80 blur-sm" />
-        <div className="absolute inset-1 rounded-full border border-white/15 bg-black/50" />
-        <div className="absolute inset-[11px] rounded-full bg-primary shadow-[0_0_26px_rgb(var(--primary)_/_0.85)]" />
-        <div className="absolute inset-0 rounded-full border border-primary/20 orbit-ring" />
+      <div className="relative h-12 w-12 shrink-0">
+        <div className="absolute -inset-1 rounded-full bg-[conic-gradient(from_180deg,rgb(var(--primary)),rgb(var(--violet)),rgb(var(--accent)),rgb(var(--gold)),rgb(var(--primary)))] opacity-75 blur-md" />
+        <div className="absolute inset-0 rounded-full border border-white/15 bg-black/60 shadow-[0_0_32px_rgb(var(--primary)_/_0.3)]" />
+        <img
+          src="/symbio-logo.png"
+          alt="SYMBIO logo"
+          className="relative h-12 w-12 rounded-full object-cover ring-1 ring-white/15"
+        />
+        <div className="pointer-events-none absolute inset-0 rounded-full border border-primary/25 orbit-ring" />
       </div>
       <div className="leading-tight">
         <div className="text-sm font-semibold tracking-[0.28em]">SYMBIO</div>
