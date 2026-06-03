@@ -42,14 +42,12 @@ body {
   color: rgb(var(--fg));
   background: rgb(var(--bg));
   overflow-x: hidden;
-  font-family:
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    Roboto,
-    Arial,
-    sans-serif;
+  font-family: var(--font-body), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-display), var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.03em;
 }
 
 ::selection {
@@ -368,6 +366,37 @@ body {
   }
 }
 
+@keyframes hero-media-drift {
+  0%,
+  100% {
+    transform: scale(1.03) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: scale(1.08) translate3d(-1.5%, -1%, 0);
+  }
+}
+
+@keyframes hero-media-scan {
+  0% {
+    transform: translateX(-120%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(120%) skewX(-12deg);
+  }
+}
+
+@keyframes hero-media-pulse {
+  0%,
+  100% {
+    opacity: 0.28;
+    transform: scale(0.82);
+  }
+  50% {
+    opacity: 0.76;
+    transform: scale(1.25);
+  }
+}
+
 .animate-breathe {
   animation: breathe 3.8s ease-in-out infinite;
 }
@@ -376,8 +405,180 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgb(var(--primary) / 0.18), transparent);
-  animation: scan-x 5s linear infinite;
+  background: linear-gradient(90deg, transparent, rgb(var(--primary) / 0.08), transparent);
+  animation: scan-x 8s linear infinite;
+}
+
+/* Hero immersive scene */
+.hero-scene-frame {
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 1.75rem;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 100%, rgb(var(--primary) / 0.12), transparent 55%),
+    linear-gradient(180deg, rgb(8 11 24 / 0.92), rgb(3 5 13 / 0.98));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 24px 80px rgb(0 0 0 / 0.45);
+}
+
+.hero-media-asset {
+  transform-origin: 55% 52%;
+  animation: hero-media-drift 18s ease-in-out infinite;
+}
+
+.hero-media-vignette {
+  background:
+    radial-gradient(ellipse 85% 55% at 50% 50%, transparent 35%, rgb(3 5 13 / 0.28) 78%),
+    linear-gradient(180deg, rgb(3 5 13 / 0.08), transparent 38%, rgb(3 5 13 / 0.86)),
+    linear-gradient(90deg, rgb(3 5 13 / 0.52), transparent 28%, transparent 72%, rgb(3 5 13 / 0.48));
+}
+
+.hero-media-scan::after {
+  content: "";
+  position: absolute;
+  inset: -20% 0;
+  width: 45%;
+  background: linear-gradient(90deg, transparent, rgb(var(--primary) / 0.16), transparent);
+  filter: blur(12px);
+  animation: hero-media-scan 7s linear infinite;
+}
+
+.hero-media-pulse {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  border-radius: 9999px;
+  border: 1px solid rgb(var(--primary) / 0.35);
+  background: radial-gradient(circle, rgb(var(--primary) / 0.2), transparent 62%);
+  box-shadow: 0 0 36px rgb(var(--primary) / 0.32);
+  animation: hero-media-pulse 3.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.hero-media-pulse-1 {
+  left: 30%;
+  top: 50%;
+}
+
+.hero-media-pulse-2 {
+  right: 17%;
+  top: 48%;
+  border-color: rgb(var(--accent) / 0.38);
+  background: radial-gradient(circle, rgb(var(--accent) / 0.2), transparent 62%);
+  box-shadow: 0 0 36px rgb(var(--accent) / 0.28);
+  animation-delay: 0.9s;
+}
+
+.hero-media-pulse-3 {
+  left: 55%;
+  top: 37%;
+  width: 48px;
+  height: 48px;
+  border-color: rgb(var(--violet) / 0.4);
+  background: radial-gradient(circle, rgb(var(--violet) / 0.2), transparent 62%);
+  box-shadow: 0 0 34px rgb(var(--violet) / 0.26);
+  animation-delay: 1.7s;
+}
+
+.hero-search-panel {
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(8 11 24 / 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+.hero-radar-fallback {
+  background:
+    radial-gradient(circle at 50% 50%, rgb(var(--primary) / 0.14), transparent 42%),
+    rgb(6 10 22 / 0.95);
+}
+
+.hero-radar-ring {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  translate: -50% -50%;
+  border-radius: 9999px;
+  border: 1px solid rgb(var(--primary) / 0.22);
+  pointer-events: none;
+}
+
+.hero-radar-ring-1 {
+  width: 120px;
+  height: 120px;
+}
+
+.hero-radar-ring-2 {
+  width: 200px;
+  height: 200px;
+  opacity: 0.7;
+}
+
+.hero-radar-ring-3 {
+  width: 280px;
+  height: 280px;
+  opacity: 0.45;
+}
+
+.hero-radar-core {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 14px;
+  height: 14px;
+  translate: -50% -50%;
+  border-radius: 9999px;
+  background: rgb(var(--primary));
+  box-shadow: 0 0 28px rgb(var(--primary) / 0.85);
+}
+
+.hero-radar-sweep {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 140px;
+  height: 140px;
+  translate: -50% -50%;
+  border-radius: 9999px;
+  background: conic-gradient(from 0deg, rgb(var(--primary) / 0.35), transparent 42deg, transparent 360deg);
+  animation: orbit-spin 4s linear infinite;
+  pointer-events: none;
+}
+
+.hero-radar-node {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background: rgb(var(--accent));
+  box-shadow: 0 0 16px rgb(var(--accent) / 0.7);
+  animation: breathe 2.8s ease-in-out infinite;
+}
+
+.hero-radar-node-1 {
+  left: 28%;
+  top: 38%;
+}
+
+.hero-radar-node-2 {
+  right: 22%;
+  top: 42%;
+  animation-delay: 0.4s;
+}
+
+.hero-radar-node-3 {
+  left: 38%;
+  bottom: 32%;
+  animation-delay: 0.8s;
+}
+
+.hero-radar-node-4 {
+  right: 30%;
+  top: 28%;
+  background: rgb(var(--violet));
+  box-shadow: 0 0 16px rgb(var(--violet) / 0.7);
+  animation-delay: 1.2s;
 }
 
 .orbit-ring {

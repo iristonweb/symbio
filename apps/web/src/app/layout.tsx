@@ -1,8 +1,21 @@
 import "./globals.css";
 import type { Metadata } from "next";
+import { Inter, Onest } from "next/font/google";
 import { Shell } from "@/components/Shell";
 import { UiModeProvider } from "@/components/UiModeProvider";
 import { LocaleProvider } from "@/components/LocaleProvider";
+
+const fontBody = Inter({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-body",
+  display: "swap",
+});
+
+const fontDisplay = Onest({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-display",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "SYMBIO — экосистема игровых серверов",
@@ -21,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className="dark" suppressHydrationWarning>
+    <html lang="ru" className={`dark ${fontBody.variable} ${fontDisplay.variable}`} suppressHydrationWarning>
       <body className="antialiased">
         <LocaleProvider>
           <UiModeProvider>

@@ -21,94 +21,94 @@ export type EcosystemServer = {
 export const ecosystemServers: EcosystemServer[] = [
   {
     id: "neon-frontier",
-    name: "Neon Frontier",
+    name: "Неоновый рубеж",
     game: "DayZ",
     region: "EU",
     online: 187,
     maxPlayers: 220,
     rating: 4.92,
-    mood: "Aggressive expansion",
+    mood: "Агрессивный рост",
     pulse: 94,
     stability: 91,
-    faction: "Aurora Syndicate",
-    season: "Season 12: Biofrost",
-    wipeIn: "03d 18h",
+    faction: "Синдикат Авроры",
+    season: "Сезон 12: Биомороз",
+    wipeIn: "03д 18ч",
     energy: 96,
-    playstyle: ["Hardcore survival", "Faction wars", "Night raids"],
+    playstyle: ["Hardcore", "Faction wars", "Night raids"],
     accent: "green",
-    lore: "A volatile frontier ecosystem where bioluminescent storms reshape faction territory every night.",
+    lore: "Нестабильный рубеж: ночные штормы меняют границы фракций каждый вечер.",
   },
   {
     id: "void-sector",
-    name: "Void Sector",
+    name: "Сектор Пустоты",
     game: "ARMA",
     region: "NA",
     online: 142,
     maxPlayers: 180,
     rating: 4.87,
-    mood: "Strategic pressure",
+    mood: "Тактическое давление",
     pulse: 83,
     stability: 88,
-    faction: "Black Helix",
-    season: "Operation Eclipse",
-    wipeIn: "11d 04h",
+    faction: "Чёрная спираль",
+    season: "Операция Затмение",
+    wipeIn: "11д 04ч",
     energy: 82,
     playstyle: ["MilSim", "Command ops", "Persistent war"],
     accent: "cyan",
-    lore: "A command-grade theatre with persistent fronts, logistics pressure, and coordinated operations.",
+    lore: "Театр операций с постоянными фронтами, логистикой и координацией отрядов.",
   },
   {
     id: "ember-colony",
-    name: "Ember Colony",
+    name: "Угольная колония",
     game: "Rust",
     region: "EU",
     online: 264,
     maxPlayers: 300,
     rating: 4.78,
-    mood: "Resource bloom",
+    mood: "Ресурсный бум",
     pulse: 98,
     stability: 74,
-    faction: "Ashborne",
-    season: "Molten Divide",
-    wipeIn: "19h 26m",
+    faction: "Пепельные",
+    season: "Раскол лавы",
+    wipeIn: "19ч 26м",
     energy: 91,
-    playstyle: ["Raids", "Economy", "Clan politics"],
+    playstyle: ["PvP", "Economy", "Clan politics"],
     accent: "amber",
-    lore: "A heated colony with short wipe cycles, explosive market shifts, and clan-controlled resource veins.",
+    lore: "Короткие вайпы, взрывная экономика и клановый контроль ресурсных жил.",
   },
   {
     id: "pulse-haven",
-    name: "Pulse Haven",
+    name: "Пульс-гавань",
     game: "Minecraft",
     region: "ASIA",
     online: 96,
     maxPlayers: 140,
     rating: 4.95,
-    mood: "Creative harmony",
+    mood: "Творческая гармония",
     pulse: 71,
     stability: 97,
-    faction: "Prism Garden",
-    season: "Verdant Machines",
-    wipeIn: "28d 09h",
+    faction: "Призменный сад",
+    season: "Изумрудные машины",
+    wipeIn: "28д 09ч",
     energy: 73,
-    playstyle: ["SMP", "Quests", "Creator events"],
+    playstyle: ["SMP", "Quests", "Roleplay"],
     accent: "magenta",
-    lore: "A cooperative world where player-built districts grow like living biomes around seasonal quests.",
+    lore: "Кооперативный мир: районы игроков растут вокруг сезонных квестов и ивентов.",
   },
 ];
 
 export const activityFeed = [
-  "Neon Frontier triggered a territory surge in Sector C-12",
-  "Ember Colony wipe timer entered final high-pressure phase",
-  "Void Sector opened command slots for weekend operation",
-  "Pulse Haven community event reached 82% participation",
+  "Неоновый рубеж: всплеск активности в секторе C-12",
+  "Угольная колония: финальная фаза до вайпа",
+  "Сектор Пустоты: открыты слоты на выходные операции",
+  "Пульс-гавань: ивент сообщества — 82% участия",
 ];
 
 export const seasonEvents = [
-  { label: "Signal bloom", time: "Now", progress: 18 },
-  { label: "Faction surge", time: "12h", progress: 42 },
-  { label: "World mutation", time: "2d", progress: 66 },
-  { label: "Wipe window", time: "3d", progress: 91 },
+  { label: "Всплеск сигнала", time: "Сейчас", progress: 18 },
+  { label: "Натиск фракций", time: "12ч", progress: 42 },
+  { label: "Мутация мира", time: "2д", progress: 66 },
+  { label: "Окно вайпа", time: "3д", progress: 91 },
 ];
 
 export function accentClass(accent: EcosystemServer["accent"]) {
@@ -118,4 +118,26 @@ export function accentClass(accent: EcosystemServer["accent"]) {
     magenta: "from-fuchsia-300 via-pink-400 to-cyan-300",
     amber: "from-amber-200 via-orange-400 to-fuchsia-400",
   }[accent];
+}
+
+/** Filter ids used on home hero — map to playstyle keywords in server data */
+export const heroFilterIds = ["all", "hardcore", "milsim", "pvp", "smp", "economy", "roleplay"] as const;
+export type HeroFilterId = (typeof heroFilterIds)[number];
+
+export function serverMatchesHeroFilter(server: EcosystemServer, filterId: HeroFilterId): boolean {
+  if (filterId === "all") return true;
+  const hay = server.playstyle.join(" ").toLowerCase();
+  const map: Record<Exclude<HeroFilterId, "all">, string[]> = {
+    hardcore: ["hardcore"],
+    milsim: ["milsim"],
+    pvp: ["pvp", "raid"],
+    smp: ["smp"],
+    economy: ["economy"],
+    roleplay: ["roleplay", "quest"],
+  };
+  return map[filterId].some((k) => hay.includes(k));
+}
+
+export function totalOnline(): number {
+  return ecosystemServers.reduce((sum, s) => sum + s.online, 0);
 }
