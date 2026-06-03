@@ -25,7 +25,7 @@ function NavLink({ href, label }: { href: string; label: string }) {
     <Link
       href={href}
       className={cn(
-        "relative rounded-xl px-3 py-2 text-sm transition",
+        "relative shrink-0 rounded-xl px-2.5 py-2 text-xs transition xl:px-3 xl:text-sm",
         active ? "text-fg" : "text-fg-muted hover:text-fg"
       )}
     >
@@ -44,20 +44,22 @@ function NavLink({ href, label }: { href: string; label: string }) {
 function Brand() {
   const { t } = useLocale();
   return (
-    <div className="flex items-center gap-3">
-      <div className="relative h-12 w-12 shrink-0">
-        <div className="absolute -inset-1 rounded-full bg-[conic-gradient(from_180deg,rgb(var(--primary)),rgb(var(--violet)),rgb(var(--accent)),rgb(var(--gold)),rgb(var(--primary)))] opacity-75 blur-md" />
+    <div className="flex min-w-0 items-center gap-3">
+      <div className="relative h-14 w-14 shrink-0">
+        <div className="absolute -inset-1.5 rounded-full bg-[conic-gradient(from_180deg,rgb(var(--primary)),rgb(var(--violet)),rgb(var(--accent)),rgb(var(--gold)),rgb(var(--primary)))] opacity-85 blur-md" />
         <div className="absolute inset-0 rounded-full border border-white/15 bg-black/60 shadow-[0_0_32px_rgb(var(--primary)_/_0.3)]" />
         <img
           src="/symbio-logo.svg"
           alt="SYMBIO"
-          className="relative h-12 w-12 rounded-full object-contain p-1.5 ring-1 ring-white/15"
+          className="relative h-14 w-14 rounded-full object-contain p-0.5 ring-1 ring-white/15"
         />
         <div className="pointer-events-none absolute inset-0 rounded-full border border-primary/25 orbit-ring" />
       </div>
       <div className="leading-tight min-w-0">
-        <div className="text-sm font-semibold tracking-[0.28em]">SYMBIO</div>
-        <div className="hidden text-[10px] uppercase tracking-[0.22em] text-fg-muted sm:block">{t.brandTagline}</div>
+        <div className="text-base font-semibold tracking-[0.26em] text-fg">SYMBIO</div>
+        <div className="hidden max-w-[8.5rem] truncate text-[10px] uppercase tracking-[0.2em] text-fg-muted sm:block">
+          {t.brandTagline}
+        </div>
       </div>
     </div>
   );
@@ -87,9 +89,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const nav = [...NAV_PUBLIC];
   if (user && (hasRole(user, "creator") || hasRole(user, "site_owner"))) {
     nav.push({ href: "/studio", label: t.nav.studio });
-  }
-  if (user) {
-    nav.push({ href: "/profile", label: t.nav.profile });
   }
   if (user && hasRole(user, "admin")) {
     nav.push({ href: "/admin/dashboard", label: t.nav.admin });
@@ -165,21 +164,21 @@ export function Shell({ children }: { children: React.ReactNode }) {
             : "border-b border-transparent bg-transparent"
         )}
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-3 sm:gap-4 sm:px-4 min-w-0">
+        <div className="mx-auto flex w-full max-w-[1480px] items-center gap-3 px-3 py-3 sm:px-4">
           <Link
             href="/"
-            className="min-w-0 shrink rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            className="shrink-0 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           >
             <Brand />
           </Link>
 
-          <nav className="hidden items-center gap-0.5 rounded-full border border-white/10 bg-black/30 p-1.5 backdrop-blur-xl lg:flex">
+          <nav className="nav-scroll hidden min-w-0 flex-1 items-center gap-0.5 overflow-x-auto rounded-full border border-white/10 bg-black/30 p-1.5 backdrop-blur-xl lg:flex">
             {nav.map((n) => (
               <NavLink key={n.href} href={n.href} label={n.label} />
             ))}
           </nav>
 
-          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
             <div className="hidden xl:block">
               <ModeSwitch />
             </div>
@@ -208,19 +207,22 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 {tokenBalance !== null ? (
                   <Link
                     href="/billing"
-                    className="hidden rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary sm:inline-flex"
+                    className="hidden rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary 2xl:inline-flex"
                   >
                     {tokenBalance} {t.rewards.tokens}
                   </Link>
                 ) : null}
-                <Link href="/profile" className="hidden max-w-[8rem] truncate text-sm text-fg-muted hover:text-fg md:block">
+                <Link
+                  href="/profile"
+                  className="hidden max-w-[7rem] truncate rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-fg-muted hover:text-fg lg:block"
+                >
                   @{user.nickname}
                 </Link>
                 <Button
                   size="sm"
-                  variant="ghost"
+                  variant="secondary"
                   onClick={logout}
-                  className="hidden px-2.5 md:inline-flex"
+                  className="inline-flex px-3"
                   aria-label={t.nav.signOut}
                 >
                   {t.nav.signOut}

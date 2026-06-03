@@ -7,7 +7,7 @@ import * as THREE from "three";
 import { useLocale } from "@/components/LocaleProvider";
 import { ecosystemServers } from "@/lib/ecosystem";
 
-const DEFAULT_HERO_MEDIA = "/symbio-hero-world-radar.svg";
+const DEFAULT_HERO_MEDIA = "/symbio-hero-world-radar.png";
 /** Optional video/GIF override — set NEXT_PUBLIC_HERO_MEDIA=/hero-loop.webm */
 const HERO_MEDIA = process.env.NEXT_PUBLIC_HERO_MEDIA || DEFAULT_HERO_MEDIA;
 

@@ -32,6 +32,14 @@
   top: var(--header-height);
 }
 
+.nav-scroll {
+  scrollbar-width: none;
+}
+
+.nav-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 @media (max-width: 1023px) {
   :root {
     --bottom-nav-offset: 88px;
