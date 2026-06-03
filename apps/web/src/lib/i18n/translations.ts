@@ -3,6 +3,11 @@ export type Locale = "ru" | "en";
 export const locales: Locale[] = ["ru", "en"];
 export const defaultLocale: Locale = "ru";
 
+/** Same shape as ru, but string values are not tied to Russian literals. */
+type Stringify<T> = {
+  [K in keyof T]: T[K] extends string ? string : Stringify<T[K]>;
+};
+
 const ru = {
   brandTagline: "сеть живых миров",
   nav: {
@@ -235,7 +240,7 @@ const ru = {
   },
 };
 
-const en: typeof ru = {
+const en: Stringify<typeof ru> = {
   brandTagline: "living worlds network",
   nav: {
     home: "Home",
