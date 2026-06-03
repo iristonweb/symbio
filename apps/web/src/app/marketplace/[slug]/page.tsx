@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { gameLabel, humanizeSlug, productTypeLabel } from "@/lib/display-labels";
 
 export default function MarketplaceProductPage() {
   const { t } = useLocale();
@@ -83,15 +84,15 @@ export default function MarketplaceProductPage() {
           </div>
           <div>
             <div className="flex flex-wrap gap-2">
-              <Badge tone="info">{product.product_type}</Badge>
-              {product.game_slug ? <Badge tone="neutral">{product.game_slug}</Badge> : null}
+              <Badge tone="info">{productTypeLabel(product.product_type)}</Badge>
+              {product.game_slug ? <Badge tone="neutral">{gameLabel(product.game_slug)}</Badge> : null}
             </div>
             <h1 className="mt-4 text-4xl font-semibold">{product.title}</h1>
             <p className="mt-4 text-fg-muted">{product.description || product.short_description}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               {product.tags.map((tag) => (
                 <span key={tag} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-fg-muted">
-                  #{tag}
+                  {humanizeSlug(tag)}
                 </span>
               ))}
             </div>

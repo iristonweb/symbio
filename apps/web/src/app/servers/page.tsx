@@ -10,8 +10,10 @@ import { useUiMode } from "@/components/UiModeProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
+import { FilterPanel, FilterRow } from "@/components/ui/FilterPanel";
 import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { gameLabel } from "@/lib/display-labels";
 
 const SORT_KEYS = ["online", "rating", "votes", "rank", "new"] as const;
 const STYLE_KEYS = ["all", "hardcore", "milsim", "pvp", "smp", "economy", "roleplay"] as const;
@@ -78,14 +80,14 @@ function ServersPageInner() {
         </div>
       </section>
 
-      <section className="sticky-below-header z-30 rounded-[2rem] border border-white/10 bg-[rgba(3,5,13,0.76)] p-4 backdrop-blur-2xl sm:p-5">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <FilterPanel sticky>
+        <FilterRow label={t.common.search}>
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t.servers.searchPlaceholder}
-              className="h-12 min-w-0 flex-1 sm:max-w-md"
+              className="h-12 min-w-0 flex-1"
             />
             <Link href="/studio" className="shrink-0">
               <Button size="sm" className="w-full sm:w-auto">
@@ -93,24 +95,22 @@ function ServersPageInner() {
               </Button>
             </Link>
           </div>
-          <div className="flex flex-col gap-3 border-t border-white/8 pt-4">
-            <div className="flex flex-wrap gap-2">
-              {SORT_KEYS.map((s) => (
-                <Chip key={s} active={sort === s} onClick={() => setSort(s)}>
-                  {sortLabels[s]}
-                </Chip>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {STYLE_KEYS.map((s) => (
-                <Chip key={s} active={style === s} onClick={() => setStyle(s)}>
-                  {styleLabels[s]}
-                </Chip>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+        </FilterRow>
+        <FilterRow label={t.servers.sortLabel}>
+          {SORT_KEYS.map((s) => (
+            <Chip key={s} active={sort === s} onClick={() => setSort(s)}>
+              {sortLabels[s]}
+            </Chip>
+          ))}
+        </FilterRow>
+        <FilterRow label={t.servers.styleLabel}>
+          {STYLE_KEYS.map((s) => (
+            <Chip key={s} active={style === s} onClick={() => setStyle(s)}>
+              {styleLabels[s]}
+            </Chip>
+          ))}
+        </FilterRow>
+      </FilterPanel>
 
       {loading ? (
         <div className="grid gap-4 lg:grid-cols-2">
@@ -125,9 +125,9 @@ function ServersPageInner() {
               <thead className="text-xs uppercase tracking-[0.18em] text-fg-muted">
                 <tr>
                   <th className="px-3 py-3">Server</th>
-                  <th className="px-3 py-3">Game</th>
-                  <th className="px-3 py-3">Region</th>
-                  <th className="px-3 py-3">Mode</th>
+                  <th className="px-3 py-3">{t.nav.games}</th>
+                  <th className="px-3 py-3">{t.common.region}</th>
+                  <th className="px-3 py-3">{t.common.mode}</th>
                   <th className="px-3 py-3 text-right">Online</th>
                   <th className="px-3 py-3 text-right">Rank</th>
                   <th className="px-3 py-3 text-right">Uptime</th>
@@ -142,7 +142,7 @@ function ServersPageInner() {
                         {server.name}
                       </Link>
                     </td>
-                    <td className="px-3 py-3">{server.game}</td>
+                    <td className="px-3 py-3">{gameLabel(server.game)}</td>
                     <td className="px-3 py-3">{server.region ?? "—"}</td>
                     <td className="px-3 py-3">{server.mode ?? "—"}</td>
                     <td className="px-3 py-3 text-right">
@@ -180,7 +180,7 @@ function ServersPageInner() {
               <Link key={server.id} href={`/servers/${server.id}`} className="organism-panel rounded-[2rem] p-6">
                 <div className="flex justify-between gap-2">
                   <div className="min-w-0">
-                    <Badge tone="info">{server.game}</Badge>
+                    <Badge tone="info">{gameLabel(server.game)}</Badge>
                     <h2 className="mt-2 truncate text-xl font-semibold">{server.name}</h2>
                     <p className="mt-1 text-xs text-fg-muted">
                       {server.region ?? "—"} · {server.mode ?? "—"}

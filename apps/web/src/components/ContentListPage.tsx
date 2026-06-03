@@ -8,6 +8,7 @@ import { PageHero } from "@/components/ui/PageHero";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { articleTypeLabel } from "@/lib/display-labels";
 
 type ContentSection = "guides" | "promocodes" | "news";
 
@@ -80,7 +81,7 @@ export default function ContentListPage({
             return (
               <Link key={a.id} href={`${basePath}/${a.slug}`} className="holo-panel rounded-2xl p-6 transition hover:border-primary/30">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge tone="info">{a.article_type}</Badge>
+                  <Badge tone="info">{articleTypeLabel(a.article_type)}</Badge>
                   {date ? <span className="text-xs text-fg-muted">{date}</span> : null}
                 </div>
                 <h2 className="mt-3 text-xl font-semibold">{a.title}</h2>

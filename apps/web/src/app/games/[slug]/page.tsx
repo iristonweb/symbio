@@ -8,6 +8,7 @@ import { useLocale } from "@/components/LocaleProvider";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { categoryLabel } from "@/lib/display-labels";
 
 export default function GameDetailPage() {
   const { t } = useLocale();
@@ -37,13 +38,17 @@ export default function GameDetailPage() {
 
   return (
     <div className="space-y-10 pb-14">
-      <section className="holo-panel rounded-[2.5rem] p-8">
-        <Badge tone="info">{game.category}</Badge>
+      <section className="relative overflow-hidden rounded-[2.5rem] border border-white/10 p-8 shadow-glass">
+        <div className="absolute inset-0 page-hero-banner page-hero-games opacity-90" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,5,13,0.94),rgba(3,5,13,0.58),rgba(3,5,13,0.9))]" />
+        <div className="relative">
+        <Badge tone="info">{categoryLabel(game.category)}</Badge>
         <h1 className="mt-4 text-5xl font-semibold">{game.title}</h1>
         <p className="mt-4 max-w-2xl text-fg-muted">{game.short_description}</p>
         <Link href={`/projects?game=${game.slug}`} className="mt-4 inline-block text-sm text-primary hover:underline">
           {t.games.viewProjects} {game.title}
         </Link>
+        </div>
       </section>
 
       <section>

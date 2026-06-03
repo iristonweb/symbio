@@ -5,6 +5,7 @@ import * as React from "react";
 import { platformApi, type EcosystemRadar } from "@/lib/platform-api";
 import { Badge } from "@/components/ui/Badge";
 import { useLocale } from "@/components/LocaleProvider";
+import { gameLabel } from "@/lib/display-labels";
 
 type Props = {
   fallbackServers?: { id: string; name: string; game: string; href?: string }[];
@@ -78,7 +79,7 @@ export function EcosystemRadarPanel({ fallbackServers = [] }: Props) {
               <span className="absolute left-10 top-0 z-20 hidden max-w-[200px] rounded-xl border border-white/12 bg-black/80 px-3 py-1.5 text-xs backdrop-blur-xl group-hover:block sm:max-w-[240px]">
                 <span className="font-medium text-fg">{server.name}</span>
                 <span className="mt-0.5 block text-fg-muted">
-                  {server.game} · {server.online}/{server.max_players}
+                  {gameLabel(server.game)} · {server.online}/{server.max_players}
                 </span>
               </span>
             </Link>

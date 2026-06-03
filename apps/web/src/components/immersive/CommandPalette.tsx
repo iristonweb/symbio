@@ -8,6 +8,7 @@ import { useLocale } from "@/components/LocaleProvider";
 import { useAuth } from "@/components/AuthProvider";
 import { hasRole } from "@/lib/auth";
 import { platformApi } from "@/lib/platform-api";
+import { articleTypeLabel, categoryLabel, gameLabel, productTypeLabel } from "@/lib/display-labels";
 
 type Action = {
   label: string;
@@ -93,7 +94,7 @@ export function CommandPalette() {
             next.push(
               ...servers.value.items.slice(0, 5).map((item) => ({
                 label: item.name,
-                hint: `${item.game} · ${item.region ?? "global"} · ${item.snapshot?.online ?? 0}/${item.snapshot?.max_players ?? 0}`,
+                hint: `${gameLabel(item.game)} · ${item.region ?? "global"} · ${item.snapshot?.online ?? 0}/${item.snapshot?.max_players ?? 0}`,
                 href: `/servers/${item.id}`,
                 kind: "server",
               }))
@@ -104,7 +105,7 @@ export function CommandPalette() {
             next.push(
               ...games.value.items.slice(0, 4).map((item) => ({
                 label: item.title,
-                hint: `${item.category} · ${item.server_count} servers`,
+                hint: `${categoryLabel(item.category)} · ${item.server_count} servers`,
                 href: `/games/${item.slug}`,
                 kind: "game",
               }))
@@ -132,9 +133,9 @@ export function CommandPalette() {
                 .slice(0, 4)
                 .map((item) => ({
                   label: item.title,
-                  hint: item.excerpt ?? item.article_type,
+                  hint: item.excerpt ?? articleTypeLabel(item.article_type),
                   href: `/news/${item.slug}`,
-                  kind: item.article_type,
+                  kind: articleTypeLabel(item.article_type),
                 }))
             );
           }
@@ -143,7 +144,7 @@ export function CommandPalette() {
             next.push(
               ...products.value.items.slice(0, 5).map((item) => ({
                 label: item.title,
-                hint: `${item.product_type} · ${item.is_free ? "free" : `${item.price_rub} ₽`} · ★ ${item.rating_avg.toFixed(1)}`,
+                hint: `${productTypeLabel(item.product_type)} · ${item.is_free ? "free" : `${item.price_rub} ₽`} · ★ ${item.rating_avg.toFixed(1)}`,
                 href: `/marketplace/${item.slug}`,
                 kind: "market",
               }))

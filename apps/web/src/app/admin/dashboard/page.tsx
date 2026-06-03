@@ -7,6 +7,7 @@ import { useLocale } from "@/components/LocaleProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { MetricCapsule } from "@/components/immersive/OrganismPanel";
+import { gameLabel, humanizeSlug } from "@/lib/display-labels";
 
 type Copilot = {
   metrics: { servers: number; online: number; avg_load: number; products: number; events: number };
@@ -90,7 +91,7 @@ export default function AdminDashboardPage() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="font-medium">{product.title}</div>
-                    <div className="text-xs text-fg-muted">{product.game ?? "any game"} · ★ {product.rating.toFixed(1)}</div>
+                    <div className="text-xs text-fg-muted">{product.game ? gameLabel(product.game) : "Любая игра"} · ★ {product.rating.toFixed(1)}</div>
                   </div>
                   <div className="text-right text-sm text-fg-muted">{product.sales} sales</div>
                 </div>
@@ -104,7 +105,7 @@ export default function AdminDashboardPage() {
       <section className="grid gap-5 lg:grid-cols-3">
         {(data?.recommendations ?? []).map((item) => (
           <div key={item.title} className="holo-panel rounded-[2rem] p-6">
-            <Badge tone={item.impact === "high" ? "warning" : "info"}>{item.type} · {item.impact}</Badge>
+            <Badge tone={item.impact === "high" ? "warning" : "info"}>{humanizeSlug(item.type)} · {humanizeSlug(item.impact)}</Badge>
             <h3 className="mt-4 text-xl font-semibold">{item.title}</h3>
             <p className="mt-4 text-sm leading-7 text-fg-muted">{item.action}</p>
           </div>

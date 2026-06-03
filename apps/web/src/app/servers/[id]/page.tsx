@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Toast } from "@/components/ui/Toast";
+import { gameLabel, humanizeSlug } from "@/lib/display-labels";
 
 export default function ServerProfilePage() {
   const { t } = useLocale();
@@ -86,8 +87,8 @@ export default function ServerProfilePage() {
         <div className="relative">
           <div className="flex flex-wrap gap-2">
             <Badge tone={snap?.status === "online" ? "success" : "neutral"}>{snap?.status ?? "—"}</Badge>
-            <Badge tone="info">{server.game}</Badge>
-            {server.region ? <Badge tone="neutral">{server.region}</Badge> : null}
+            <Badge tone="info">{gameLabel(server.game)}</Badge>
+            {server.region ? <Badge tone="neutral">{humanizeSlug(server.region)}</Badge> : null}
           </div>
           <h1 className="mt-6 max-w-3xl text-5xl font-semibold sm:text-7xl">{server.name}</h1>
           <p className="mt-5 max-w-2xl text-fg-muted">{server.description ?? t.servers.descriptionFallback}</p>

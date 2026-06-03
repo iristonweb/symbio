@@ -8,6 +8,7 @@ import { useLocale } from "@/components/LocaleProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { articleTypeLabel, humanizeSlug } from "@/lib/display-labels";
 
 export default function ContentDetailPage({
   basePath,
@@ -49,7 +50,7 @@ export default function ContentDetailPage({
 
       <header className="holo-panel rounded-[2rem] p-8">
         <div className="flex flex-wrap gap-2">
-          <Badge tone="info">{article.article_type}</Badge>
+          <Badge tone="info">{articleTypeLabel(article.article_type)}</Badge>
           {published ? (
             <span className="text-xs text-fg-muted">
               {t.content.published}: {published}
@@ -62,7 +63,7 @@ export default function ContentDetailPage({
           <div className="mt-4 flex flex-wrap gap-2">
             {article.tags.map((tag) => (
               <span key={tag} className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs text-fg-muted">
-                #{tag}
+                {humanizeSlug(tag)}
               </span>
             ))}
           </div>

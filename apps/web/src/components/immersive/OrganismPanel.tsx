@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/cn";
 import { accentClass, type EcosystemServer } from "@/lib/ecosystem";
 import { Badge } from "@/components/ui/Badge";
+import { gameLabel, humanizeSlug } from "@/lib/display-labels";
 
 export function PulseOrb({
   value,
@@ -68,7 +69,7 @@ export function OrganismPanel({
               </div>
               <h3 className="mt-4 text-xl font-semibold tracking-tight text-fg">{server.name}</h3>
               <p className="mt-1 text-xs uppercase tracking-[0.28em] text-fg-muted">
-                {server.game} / {server.faction}
+                {gameLabel(server.game)} / {humanizeSlug(server.faction)}
               </p>
             </div>
             <div className="shrink-0">

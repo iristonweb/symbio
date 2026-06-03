@@ -311,6 +311,54 @@ body {
   background-size: cover;
 }
 
+.page-hero-banner {
+  background-position: center;
+  background-size: cover;
+}
+
+.page-hero-ecosystem,
+.page-hero-games,
+.page-hero-projects,
+.page-hero-news,
+.page-hero-guides,
+.page-hero-profile,
+.page-hero-docs {
+  background-image:
+    radial-gradient(circle at 16% 22%, rgb(var(--primary) / 0.34), transparent 32%),
+    radial-gradient(circle at 80% 20%, rgb(var(--violet) / 0.28), transparent 34%),
+    linear-gradient(135deg, rgba(15, 24, 42, 0.92), rgba(3, 5, 13, 0.96)),
+    url("/symbio-ecosystem-bg.svg");
+}
+
+.page-hero-servers {
+  background-image:
+    radial-gradient(circle at 70% 35%, rgb(var(--accent) / 0.24), transparent 30%),
+    url("/symbio-server-banner.svg");
+}
+
+.page-hero-marketplace {
+  background-image:
+    radial-gradient(circle at 18% 22%, rgb(var(--gold) / 0.3), transparent 30%),
+    radial-gradient(circle at 78% 24%, rgb(var(--violet) / 0.34), transparent 34%),
+    linear-gradient(135deg, rgba(30, 15, 45, 0.86), rgba(3, 5, 13, 0.98));
+}
+
+.page-hero-contests,
+.page-hero-billing {
+  background-image:
+    radial-gradient(circle at 20% 22%, rgb(var(--gold) / 0.34), transparent 30%),
+    radial-gradient(circle at 82% 32%, rgb(var(--accent) / 0.22), transparent 34%),
+    linear-gradient(135deg, rgba(40, 28, 8, 0.78), rgba(3, 5, 13, 0.98));
+}
+
+.page-hero-studio,
+.page-hero-admin {
+  background-image:
+    radial-gradient(circle at 20% 20%, rgb(var(--primary) / 0.32), transparent 30%),
+    radial-gradient(circle at 78% 28%, rgb(var(--gold) / 0.22), transparent 34%),
+    url("/symbio-control-banner.svg");
+}
+
 .organism-panel {
   border: 1px solid rgb(255 255 255 / 0.1);
   background:

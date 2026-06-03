@@ -7,8 +7,11 @@ import { useLocale } from "@/components/LocaleProvider";
 import { PageHero } from "@/components/ui/PageHero";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
+import { Chip } from "@/components/ui/Chip";
+import { FilterPanel, FilterRow } from "@/components/ui/FilterPanel";
 import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { categoryLabel } from "@/lib/display-labels";
 
 const CATEGORY_KEYS = [
   { id: "", labelKey: "all" as const },
@@ -37,30 +40,27 @@ export default function GamesPage() {
     <div className="space-y-10 pb-14">
       <PageHero badge={t.games.badge} title={t.games.title} titleAccent={t.games.titleAccent} subtitle={t.games.subtitle} />
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+      <FilterPanel>
+        <FilterRow label={t.common.search}>
         <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={t.games.searchPlaceholder}
-          className="max-w-md"
+          className="h-12 w-full"
         />
-        <div className="flex flex-wrap gap-2">
+        </FilterRow>
+        <FilterRow label={t.games.categoryLabel}>
           {CATEGORY_KEYS.map((c) => (
-            <button
+            <Chip
               key={c.id}
-              type="button"
+              active={category === c.id}
               onClick={() => setCategory(c.id)}
-              className={
-                category === c.id
-                  ? "rounded-full border border-primary/50 bg-primary/15 px-4 py-2 text-xs text-primary"
-                  : "rounded-full border border-white/10 px-4 py-2 text-xs text-fg-muted hover:bg-white/10"
-              }
             >
               {t.common[c.labelKey]}
-            </button>
+            </Chip>
           ))}
-        </div>
-      </div>
+        </FilterRow>
+      </FilterPanel>
 
       {loading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -83,7 +83,7 @@ export default function GamesPage() {
               href={`/games/${g.slug}`}
               className="holo-panel rounded-[2rem] p-6 transition hover:border-primary/30"
             >
-              <Badge tone="neutral">{g.category}</Badge>
+              <Badge tone="neutral">{categoryLabel(g.category)}</Badge>
               <h2 className="mt-3 text-2xl font-semibold">{g.title}</h2>
               <p className="mt-2 line-clamp-2 text-sm text-fg-muted">{g.short_description}</p>
               <div className="mt-4 text-xs text-fg-muted">

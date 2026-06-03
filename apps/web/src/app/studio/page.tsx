@@ -9,7 +9,9 @@ import { useLocale } from "@/components/LocaleProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
+import { FilterPanel, FilterRow } from "@/components/ui/FilterPanel";
 import { Input } from "@/components/ui/Input";
+import { gameLabel, productTypeLabel } from "@/lib/display-labels";
 
 export default function StudioPage() {
   const { t } = useLocale();
@@ -128,12 +130,16 @@ export default function StudioPage() {
 
   return (
     <div className="space-y-10 pb-14">
-      <section className="holo-panel rounded-[2.7rem] p-8">
+      <section className="relative overflow-hidden rounded-[2.7rem] border border-white/10 p-8 shadow-glass">
+        <div className="absolute inset-0 page-hero-banner page-hero-studio opacity-90" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,5,13,0.94),rgba(3,5,13,0.58),rgba(3,5,13,0.9))]" />
+        <div className="relative">
         <Badge tone="info">{t.studio.badge}</Badge>
         <h1 className="mt-4 text-5xl font-semibold">
           {t.studio.title} <span className="text-gradient">{t.studio.titleAccent}</span>
         </h1>
         <p className="mt-4 text-fg-muted">{t.studio.subtitle}</p>
+        </div>
       </section>
 
       {!user ? (
@@ -146,7 +152,8 @@ export default function StudioPage() {
       ) : null}
 
       {user ? (
-        <div className="flex flex-wrap gap-2">
+        <FilterPanel>
+          <FilterRow label={t.studio.workspaceTabs}>
           {(["dashboard", "product", "project", "server"] as const).map((tb) => (
             <Chip key={tb} active={tab === tb} onClick={() => setTab(tb)}>
               {tb === "dashboard"
@@ -158,10 +165,11 @@ export default function StudioPage() {
                     : t.studio.tabServer}
             </Chip>
           ))}
-          <Link href="/billing" className="ml-auto text-sm text-primary hover:underline">
+          <Link href="/billing" className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs text-primary hover:border-primary/40">
             {t.studio.billingLink}
           </Link>
-        </div>
+          </FilterRow>
+        </FilterPanel>
       ) : null}
 
       {msg ? <p className="text-sm text-primary">{msg}</p> : null}
@@ -196,7 +204,7 @@ export default function StudioPage() {
                         {product.title}
                       </Link>
                       <div className="mt-1 text-xs text-fg-muted">
-                        {product.product_type} · {product.game_slug ?? "any"} · {product.sales_count} sales
+                        {productTypeLabel(product.product_type)} · {gameLabel(product.game_slug)} · {product.sales_count} {t.marketplace.sales}
                       </div>
                     </div>
                     <Badge tone={product.moderation_status === "approved" ? "success" : product.moderation_status === "rejected" ? "danger" : "warning"}>

@@ -51,7 +51,7 @@ function Brand() {
         <img
           src="/symbio-logo.svg"
           alt="SYMBIO"
-          className="relative h-12 w-12 rounded-full object-cover ring-1 ring-white/15"
+          className="relative h-12 w-12 rounded-full object-contain p-1.5 ring-1 ring-white/15"
         />
         <div className="pointer-events-none absolute inset-0 rounded-full border border-primary/25 orbit-ring" />
       </div>

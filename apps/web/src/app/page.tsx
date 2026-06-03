@@ -22,6 +22,7 @@ import { useUiMode } from "@/components/UiModeProvider";
 import { useAuth } from "@/components/AuthProvider";
 import { hasRole } from "@/lib/auth";
 import { platformApi, type EcosystemRadar } from "@/lib/platform-api";
+import { gameLabel, humanizeSlug } from "@/lib/display-labels";
 
 type HomeServer = {
   id: string;
@@ -203,7 +204,7 @@ export default function HomePage() {
                     <div className="min-w-0">
                       <div className="truncate text-sm font-semibold">{server.name}</div>
                       <div className="mt-1 truncate text-[11px] uppercase tracking-[0.18em] text-fg-muted">
-                        {server.game} · {server.mode ?? server.region ?? "live"}
+                        {gameLabel(server.game)} · {humanizeSlug(server.mode ?? server.region ?? "live")}
                       </div>
                     </div>
                     <span className="rounded-full border border-primary/25 bg-primary/10 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-primary">
@@ -285,9 +286,9 @@ export default function HomePage() {
                           {server.name}
                         </Link>
                       </td>
-                      <td className="py-3">{server.game}</td>
-                      <td className="py-3">{server.mode ?? "—"}</td>
-                      <td className="py-3">{server.region ?? "global"}</td>
+                      <td className="py-3">{gameLabel(server.game)}</td>
+                      <td className="py-3">{humanizeSlug(server.mode)}</td>
+                      <td className="py-3">{humanizeSlug(server.region ?? "global")}</td>
                       <td className="py-3 text-right">{server.online}/{server.maxPlayers}</td>
                       <td className="py-3 text-right">{load}%</td>
                     </tr>
@@ -324,10 +325,10 @@ export default function HomePage() {
               <Link key={server.id} href={server.href} className="organism-panel rounded-[2rem] p-5 transition hover:border-primary/30">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <Badge tone={server.status === "online" ? "success" : "info"}>{server.game}</Badge>
+                    <Badge tone={server.status === "online" ? "success" : "info"}>{gameLabel(server.game)}</Badge>
                     <h3 className="mt-3 truncate text-xl font-semibold">{server.name}</h3>
                     <p className="mt-1 text-sm text-fg-muted">
-                      {server.region ?? "global"} · {server.mode ?? "ecosystem"}
+                      {humanizeSlug(server.region ?? "global")} · {humanizeSlug(server.mode ?? "ecosystem")}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">

@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { gameLabel, humanizeSlug, productTypeLabel } from "@/lib/display-labels";
 
 type GraphNode = {
   id: string;
@@ -86,8 +87,8 @@ export default function CompatibilityPage() {
               <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-primary/10 blur-2xl" />
               <div className="relative">
                 <div className="flex flex-wrap gap-2">
-                  <Badge tone="info">{node.type}</Badge>
-                  {node.game ? <Badge tone="neutral">{node.game}</Badge> : null}
+                  <Badge tone="info">{productTypeLabel(node.type)}</Badge>
+                  {node.game ? <Badge tone="neutral">{gameLabel(node.game)}</Badge> : null}
                 </div>
                 <Link href={`/marketplace/${node.slug}`} className="mt-3 block text-lg font-semibold hover:text-primary">
                   {node.label}
@@ -109,7 +110,7 @@ export default function CompatibilityPage() {
                     return (
                       <div key={edge.id} className="rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-xs">
                         <span className={edge.relation === "conflicts" ? "text-red-300" : "text-primary"}>
-                          {edge.relation}
+                          {humanizeSlug(edge.relation)}
                         </span>{" "}
                         → {target?.label ?? edge.target}
                         {edge.note ? <div className="mt-1 text-fg-muted">{edge.note}</div> : null}

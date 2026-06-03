@@ -9,8 +9,10 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
+import { FilterPanel, FilterRow } from "@/components/ui/FilterPanel";
 import { Input } from "@/components/ui/Input";
 import { GlowCard } from "@/components/immersive/GlowCard";
+import { gameLabel, humanizeSlug, productTypeLabel } from "@/lib/display-labels";
 
 const TYPES = ["", "mod", "addon", "resource_pack", "plugin", "service"];
 
@@ -71,24 +73,28 @@ export default function MarketplacePage() {
         </div>
       </PageHero>
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+      <FilterPanel>
+        <FilterRow label={t.common.search}>
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
         <Input
           placeholder={t.marketplace.searchPlaceholder}
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          className="max-w-md"
+          className="h-12 min-w-0 flex-1"
         />
         <Button variant="outline" onClick={load}>
           {t.marketplace.search}
         </Button>
-      </div>
-      <div className="flex flex-wrap gap-2">
+          </div>
+        </FilterRow>
+        <FilterRow label={t.marketplace.typeLabel}>
         {TYPES.map((typeId) => (
           <Chip key={typeId || "all"} active={type === typeId} onClick={() => setType(typeId)}>
-            {typeId || t.marketplace.typeAll}
+            {typeId ? productTypeLabel(typeId) : t.marketplace.typeAll}
           </Chip>
         ))}
-      </div>
+        </FilterRow>
+      </FilterPanel>
 
       {loading ? (
         <p className="text-fg-muted">{t.common.loading}</p>
@@ -109,8 +115,8 @@ export default function MarketplacePage() {
                 ) : null}
                 <div className="absolute inset-0 ecosystem-grid opacity-30" />
                 <div className="absolute left-3 top-3 flex flex-wrap gap-2">
-                  <Badge tone="info">{item.product_type}</Badge>
-                  {item.game_slug ? <Badge tone="neutral">{item.game_slug}</Badge> : null}
+                  <Badge tone="info">{productTypeLabel(item.product_type)}</Badge>
+                  {item.game_slug ? <Badge tone="neutral">{gameLabel(item.game_slug)}</Badge> : null}
                 </div>
                 <div
                   className="absolute bottom-3 right-3 rounded-full border border-accent/30 bg-black/55 px-3 py-1 text-[11px] text-accent backdrop-blur-xl"
@@ -128,7 +134,7 @@ export default function MarketplacePage() {
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {item.tags.slice(0, 3).map((tag) => (
                   <span key={tag} className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[10px] text-fg-muted">
-                    #{tag}
+                    {humanizeSlug(tag)}
                   </span>
                 ))}
               </div>
