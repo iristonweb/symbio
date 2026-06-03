@@ -1,0 +1,16 @@
+{
+  "name": "symbio-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down -v",
+    "web:dev": "npm --workspace apps/web run dev",
+    "web:build": "npm --workspace apps/web run build",
+    "web:start": "npm --workspace apps/web run start",
+    "dev": "npm run web:dev",
+    "audit:web": "npm --workspace apps/web audit"
+  }
+}

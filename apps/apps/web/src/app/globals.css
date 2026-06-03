@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Theme 4: Golden / Teal minimal (premium “white-tech” optional via next-themes) */
+:root {
+  --cy-bg: 9 12 16;
+  --cy-surface: 16 20 26;
+  --cy-border: 255 255 255 / 0.09;
+  --cy-text: 236 242 248;
+  --cy-muted: 172 186 202;
+
+  /* Accent palette */
+  --cy-accent: 20 210 198; /* teal */
+  --cy-lime: 244 201 93;   /* gold */
+  --cy-violet: 14 116 144; /* legacy var (deep teal) */
+
+  --radius: 20px;
+}
+
+.light {
+  --cy-bg: 246 248 252;
+  --cy-surface: 255 255 255;
+  --cy-border: 0 0 0 / 0.08;
+  --cy-text: 18 24 32;
+  --cy-muted: 88 102 120;
+
+  --cy-accent: 14 180 171; /* teal */
+  --cy-lime: 216 167 65;   /* gold */
+  --cy-violet: 10 110 135; /* deep teal */
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  color: rgb(var(--cy-text));
+  background: rgb(var(--cy-bg));
+  overflow-x: hidden;
+}
+
+/* Background: subtle gold+teal aurora without “neon soup” */
+.cy-bg {
+  position: relative;
+}
+.cy-bg::before,
+.cy-bg::after {
+  content: "";
+  position: fixed;
+  inset: -40vh -40vw;
+  pointer-events: none;
+  z-index: -2;
+  filter: blur(70px);
+  opacity: 0.55;
+  transform: translate3d(0,0,0);
+}
+.cy-bg::before {
+  background:
+    radial-gradient(40% 45% at 20% 20%, rgb(var(--cy-accent) / 0.38) 0%, rgb(var(--cy-accent) / 0.0) 55%),
+    radial-gradient(45% 40% at 80% 25%, rgb(var(--cy-lime) / 0.28) 0%, rgb(var(--cy-lime) / 0.0) 60%),
+    radial-gradient(35% 45% at 70% 80%, rgb(var(--cy-accent) / 0.22) 0%, rgb(var(--cy-accent) / 0.0) 65%);
+}
+.cy-bg::after {
+  z-index: -1;
+  opacity: 0.25;
+  background:
+    radial-gradient(50% 50% at var(--mx, 60%) var(--my, 30%), rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.0) 55%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 1px, rgba(255,255,255,0.0) 1px 6px);
+  mix-blend-mode: overlay;
+}
+
+/* Typography helpers */
+.text-gradient {
+  background: linear-gradient(90deg, rgb(var(--cy-lime) / 0.95), rgb(var(--cy-accent) / 0.95));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.glass {
+  background: rgb(var(--cy-surface) / 0.70);
+  border: 1px solid rgb(var(--cy-border));
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: var(--radius);
+}
+
+.ring-gold {
+  box-shadow: 0 0 0 1px rgb(var(--cy-lime) / 0.22), 0 0 0 8px rgb(var(--cy-lime) / 0.08);
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+}

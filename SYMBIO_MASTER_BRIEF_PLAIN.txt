@@ -1,0 +1,5 @@
+SYMBIO — Master Brief v1.2 (PLAIN TEXT)
+
+Note: this file avoids Markdown heading markers like '##' so it can be safely copied anywhere.
+
+If you need the full structured brief, keep using the project documentation; this is a copy-safe version.
