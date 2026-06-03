@@ -112,7 +112,10 @@ export default function MarketplacePage() {
                   <Badge tone="info">{item.product_type}</Badge>
                   {item.game_slug ? <Badge tone="neutral">{item.game_slug}</Badge> : null}
                 </div>
-                <div className="absolute bottom-3 right-3 rounded-full border border-accent/30 bg-black/55 px-3 py-1 text-[11px] text-accent backdrop-blur-xl">
+                <div
+                  className="absolute bottom-3 right-3 rounded-full border border-accent/30 bg-black/55 px-3 py-1 text-[11px] text-accent backdrop-blur-xl"
+                  title={t.marketplace.verifiedDesc}
+                >
                   {t.marketplace.verified}
                 </div>
               </div>
@@ -150,7 +153,7 @@ export default function MarketplacePage() {
         </div>
       )}
       {toast ? (
-        <div className="fixed bottom-5 right-5 z-[90] rounded-2xl border border-primary/30 bg-black/80 px-4 py-3 text-sm text-fg shadow-glass backdrop-blur-xl">
+        <div className="fixed bottom-24 right-5 z-[90] rounded-2xl border border-primary/30 bg-black/80 px-4 py-3 text-sm text-fg shadow-glass backdrop-blur-xl lg:bottom-5">
           {toast}
         </div>
       ) : null}

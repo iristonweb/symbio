@@ -76,6 +76,8 @@ export default function CompatibilityPage() {
 
       {loading ? <p className="text-fg-muted">{t.marketplace.compatLoading}</p> : null}
 
+      <p className="text-sm text-fg-muted">{t.marketplace.trustExplain}</p>
+
       <section className="grid gap-4 lg:grid-cols-3">
         {nodes.map((node) => {
           const outgoing = edgeBySource.get(node.id) ?? [];
@@ -90,7 +92,7 @@ export default function CompatibilityPage() {
                 <Link href={`/marketplace/${node.slug}`} className="mt-3 block text-lg font-semibold hover:text-primary">
                   {node.label}
                 </Link>
-                <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-fg-muted">
+                <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-fg-muted sm:grid-cols-3">
                   <span>★ {node.rating.toFixed(1)}</span>
                   <span>{node.sales} sales</span>
                   <span>{Math.round(node.confidence * 100)}% trust</span>

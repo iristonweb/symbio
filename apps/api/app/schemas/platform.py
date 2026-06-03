@@ -156,6 +156,19 @@ class ClaimRequest(BaseModel):
     proof: str | None = None
 
 
+class VoteResponse(BaseModel):
+    vote_id: str
+    server_id: str
+    votes: int
+    rewarded: bool
+    earned_tokens: int
+    multiplier: float
+    wallet_balance: int
+    next_vote_at: str | None = None
+    social_providers: list[str] = []
+    email_verified: bool = False
+
+
 class PromotionCreate(BaseModel):
     target_type: str = Field(pattern="^(server|project)$")
     target_id: UUID

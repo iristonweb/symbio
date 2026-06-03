@@ -17,8 +17,9 @@ export default function LoginPage() {
   const { setAuthToken } = useAuth();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-  const [email, setEmail] = React.useState("admin@symbio.dev");
-  const [password, setPassword] = React.useState("admin123");
+  const isDev = process.env.NODE_ENV === "development";
+  const [email, setEmail] = React.useState(isDev ? "admin@symbio.dev" : "");
+  const [password, setPassword] = React.useState(isDev ? "admin123" : "");
   const [error, setError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
 
@@ -58,6 +59,7 @@ export default function LoginPage() {
             {t.auth.signInTitle} <span className="text-gradient">SYMBIO</span>
           </h1>
           <p className="mt-4 max-w-md text-sm leading-7 text-fg-muted">{t.auth.signInDesc}</p>
+          <p className="mt-3 max-w-md text-xs text-fg-muted">{t.rewards.socialDesc}</p>
         </motion.div>
 
         <GlowCard className="p-6 sm:p-8">
@@ -88,6 +90,7 @@ export default function LoginPage() {
               Steam
             </Button>
           </div>
+          {isDev ? <p className="mt-3 text-center text-xs text-fg-muted">{t.auth.devHint}</p> : null}
           <Link href="/auth/register" className="mt-4 block text-center text-sm text-fg-muted hover:text-fg">
             {t.auth.createLink}
           </Link>

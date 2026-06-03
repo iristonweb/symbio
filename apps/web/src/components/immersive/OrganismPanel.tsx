@@ -61,7 +61,7 @@ export function OrganismPanel({
           <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
 
           <div className="relative flex items-start justify-between gap-4">
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={server.stability > 88 ? "success" : "warning"}>{server.mood}</Badge>
                 <Badge tone="neutral">{server.region}</Badge>
@@ -71,12 +71,14 @@ export function OrganismPanel({
                 {server.game} / {server.faction}
               </p>
             </div>
-            <PulseOrb value={server.pulse} accent={server.accent} size={compact ? "sm" : "md"} />
+            <div className="shrink-0">
+              <PulseOrb value={server.pulse} accent={server.accent} size={compact ? "sm" : "md"} />
+            </div>
           </div>
 
           <p className={cn("relative mt-4 text-sm leading-6 text-fg-muted", compact && "line-clamp-2")}>{server.lore}</p>
 
-          <div className="relative mt-5 grid grid-cols-3 gap-2">
+          <div className="relative mt-5 grid grid-cols-1 gap-2 sm:grid-cols-3">
             {[
               ["Online", `${server.online}/${server.maxPlayers}`],
               ["Stability", `${server.stability}%`],

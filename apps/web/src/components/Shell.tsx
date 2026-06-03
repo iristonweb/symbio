@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { Kbd } from "@/components/ui/Kbd";
 import { SpotlightBackground } from "@/components/immersive/SpotlightBackground";
 import { CommandPalette } from "@/components/immersive/CommandPalette";
+import { platformApi } from "@/lib/platform-api";
 
 function NavLink({ href, label }: { href: string; label: string }) {
   const pathname = usePathname();
@@ -48,15 +49,15 @@ function Brand() {
         <div className="absolute -inset-1 rounded-full bg-[conic-gradient(from_180deg,rgb(var(--primary)),rgb(var(--violet)),rgb(var(--accent)),rgb(var(--gold)),rgb(var(--primary)))] opacity-75 blur-md" />
         <div className="absolute inset-0 rounded-full border border-white/15 bg-black/60 shadow-[0_0_32px_rgb(var(--primary)_/_0.3)]" />
         <img
-          src="/symbio-logo.png"
+          src="/symbio-logo.svg"
           alt="SYMBIO"
           className="relative h-12 w-12 rounded-full object-cover ring-1 ring-white/15"
         />
         <div className="pointer-events-none absolute inset-0 rounded-full border border-primary/25 orbit-ring" />
       </div>
-      <div className="leading-tight">
+      <div className="leading-tight min-w-0">
         <div className="text-sm font-semibold tracking-[0.28em]">SYMBIO</div>
-        <div className="text-[10px] uppercase tracking-[0.22em] text-fg-muted">{t.brandTagline}</div>
+        <div className="hidden text-[10px] uppercase tracking-[0.22em] text-fg-muted sm:block">{t.brandTagline}</div>
       </div>
     </div>
   );
@@ -66,16 +67,20 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const { t } = useLocale();
   const { user, logout, loading } = useAuth();
   const [api, setApi] = React.useState<"unknown" | "up" | "down">("unknown");
+  const [tokenBalance, setTokenBalance] = React.useState<number | null>(null);
   const [scrolled, setScrolled] = React.useState(false);
+  const headerRef = React.useRef<HTMLElement>(null);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
   const NAV_PUBLIC = [
     { href: "/", label: t.nav.home },
     { href: "/games", label: t.nav.games },
     { href: "/servers", label: t.nav.servers },
-    { href: "/marketplace", label: t.nav.marketplace ?? "Маркет" },
+    { href: "/marketplace", label: t.nav.marketplace },
     { href: "/projects", label: t.nav.projects },
     { href: "/news", label: t.nav.news },
+    { href: "/guides", label: t.nav.guides },
+    { href: "/contests", label: t.nav.contests },
     { href: "/billing", label: t.nav.billing },
   ];
 
@@ -84,11 +89,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
     nav.push({ href: "/studio", label: t.nav.studio });
   }
   if (user) {
-    nav.push({ href: "/profile", label: t.nav.profile ?? "Профиль" });
+    nav.push({ href: "/profile", label: t.nav.profile });
   }
   if (user && hasRole(user, "admin")) {
-    nav.push({ href: "/admin/dashboard", label: "Admin" });
+    nav.push({ href: "/admin/dashboard", label: t.nav.admin });
   }
+
+  const isCreator = Boolean(user && (hasRole(user, "creator") || hasRole(user, "site_owner")));
 
   React.useEffect(() => {
     let mounted = true;
@@ -102,11 +109,38 @@ export function Shell({ children }: { children: React.ReactNode }) {
   }, [apiUrl]);
 
   React.useEffect(() => {
+    if (!user) {
+      setTokenBalance(null);
+      return;
+    }
+    platformApi.tokenWallet().then((w) => setTokenBalance(w.balance_tokens)).catch(() => setTokenBalance(null));
+  }, [user]);
+
+  React.useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  React.useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+
+    const syncHeaderHeight = () => {
+      document.documentElement.style.setProperty("--header-height", `${el.offsetHeight}px`);
+    };
+
+    syncHeaderHeight();
+    const observer = new ResizeObserver(syncHeaderHeight);
+    observer.observe(el);
+    window.addEventListener("resize", syncHeaderHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", syncHeaderHeight);
+    };
+  }, [user, loading]);
 
   const apiLabel =
     api === "up" ? t.api.online : api === "down" ? t.api.offline : t.api.unknown;
@@ -123,6 +157,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <CommandPalette />
 
       <header
+        ref={headerRef}
         className={cn(
           "sticky top-0 z-50 transition duration-300",
           scrolled
@@ -130,10 +165,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
             : "border-b border-transparent bg-transparent"
         )}
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-3 sm:gap-4 sm:px-4 min-w-0">
           <Link
             href="/"
-            className="rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            className="min-w-0 shrink rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           >
             <Brand />
           </Link>
@@ -144,7 +179,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             <div className="hidden xl:block">
               <ModeSwitch />
             </div>
@@ -169,17 +204,31 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </button>
 
             {!loading && user ? (
-              <div className="flex items-center gap-2">
-                <Link href="/profile" className="hidden text-sm text-fg-muted hover:text-fg sm:block">
+              <div className="flex items-center gap-1 sm:gap-2">
+                {tokenBalance !== null ? (
+                  <Link
+                    href="/billing"
+                    className="hidden rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary sm:inline-flex"
+                  >
+                    {tokenBalance} {t.rewards.tokens}
+                  </Link>
+                ) : null}
+                <Link href="/profile" className="hidden max-w-[8rem] truncate text-sm text-fg-muted hover:text-fg md:block">
                   @{user.nickname}
                 </Link>
-                <Button size="sm" variant="ghost" onClick={logout}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={logout}
+                  className="hidden px-2.5 md:inline-flex"
+                  aria-label={t.nav.signOut}
+                >
                   {t.nav.signOut}
                 </Button>
               </div>
             ) : (
               <Link href="/auth/login">
-                <Button size="sm" variant="premium">
+                <Button size="sm" variant="premium" className="px-3">
                   {t.nav.signIn}
                 </Button>
               </Link>
@@ -200,10 +249,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
       <nav className="fixed bottom-3 left-1/2 z-50 grid w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 grid-cols-4 gap-1 rounded-[1.5rem] border border-white/10 bg-[rgba(3,5,13,0.88)] p-1.5 shadow-glass backdrop-blur-2xl lg:hidden">
         {[
-          { href: "/servers", label: "Worlds" },
-          { href: "/marketplace", label: "Market" },
-          { href: user ? "/profile" : "/auth/login", label: "Me" },
-          { href: "/studio", label: "Studio" },
+          { href: "/servers", label: t.mobileNav.worlds },
+          { href: "/marketplace", label: t.mobileNav.market },
+          { href: user ? "/profile" : "/auth/login", label: t.mobileNav.me },
+          {
+            href: isCreator ? "/studio" : user ? "/studio" : "/auth/login",
+            label: isCreator ? t.mobileNav.studio : user ? t.mobileNav.becomeCreator : t.mobileNav.studio,
+          },
         ].map((item) => (
           <Link
             key={item.href}
@@ -223,6 +275,21 @@ export function Shell({ children }: { children: React.ReactNode }) {
               {t.footer.tagline}
             </div>
             <div className="flex flex-wrap gap-4 text-sm text-fg-muted">
+              <Link href="/about" className="hover:text-fg">
+                {t.footer.about}
+              </Link>
+              <Link href="/contact" className="hover:text-fg">
+                {t.footer.contact}
+              </Link>
+              <Link href="/help" className="hover:text-fg">
+                {t.footer.help}
+              </Link>
+              <Link href="/legal/privacy" className="hover:text-fg">
+                {t.footer.privacy}
+              </Link>
+              <Link href="/legal/terms" className="hover:text-fg">
+                {t.footer.terms}
+              </Link>
               <Link href="/guides" className="hover:text-fg">
                 {t.nav.guides}
               </Link>
@@ -236,7 +303,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 {t.nav.docs}
               </Link>
               <Link href="/marketplace" className="hover:text-fg">
-                {t.nav.marketplace ?? "Маркет"}
+                {t.nav.marketplace}
               </Link>
               <Link href="/games" className="hover:text-fg">
                 {t.nav.games}
@@ -244,10 +311,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
               {!user ? (
                 <>
                   <button type="button" className="hover:text-fg" onClick={() => startOAuth("google")}>
-                    Google
+                    {t.auth.oauthGoogle}
                   </button>
                   <button type="button" className="hover:text-fg" onClick={() => startOAuth("steam")}>
-                    Steam
+                    {t.auth.oauthSteam}
                   </button>
                 </>
               ) : null}

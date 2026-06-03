@@ -5,6 +5,8 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { useLocale } from "@/components/LocaleProvider";
+import { useAuth } from "@/components/AuthProvider";
+import { hasRole } from "@/lib/auth";
 import { platformApi } from "@/lib/platform-api";
 
 type Action = {
@@ -18,14 +20,16 @@ type Action = {
 export function CommandPalette() {
   const router = useRouter();
   const { t } = useLocale();
+  const { user } = useAuth();
+  const isAdmin = hasRole(user, "admin");
   const [open, setOpen] = React.useState(false);
   const [q, setQ] = React.useState("");
   const [results, setResults] = React.useState<Action[]>([]);
   const [searching, setSearching] = React.useState(false);
   const dialogRef = React.useRef<HTMLDivElement | null>(null);
 
-  const ACTIONS: Action[] = React.useMemo(
-    () => [
+  const ACTIONS: Action[] = React.useMemo(() => {
+    const base: Action[] = [
       { label: t.palette.ecosystem, kbd: "E", href: "/", hint: t.palette.ecosystemHint },
       { label: t.palette.worlds, kbd: "W", href: "/servers", hint: t.palette.worldsHint },
       { label: t.nav.games, href: "/games", hint: t.games.subtitle },
@@ -33,14 +37,19 @@ export function CommandPalette() {
       { label: t.nav.news, href: "/news", hint: t.news.subtitle },
       { label: t.nav.guides, href: "/guides", hint: t.guides.subtitle },
       { label: t.nav.contests, href: "/contests", hint: t.contests.subtitle },
+      { label: t.nav.help, href: "/help", hint: t.help.subtitle },
       { label: t.nav.docs, href: "/docs", hint: t.docs.subtitle },
       { label: t.palette.studio, kbd: "A", href: "/studio", hint: t.palette.studioHint },
-      { label: t.palette.admin, kbd: "D", href: "/admin/dashboard", hint: t.palette.adminHint },
       { label: t.palette.profile, kbd: "P", href: "/profile", hint: t.palette.profileHint },
-      { label: t.palette.audit, href: "/admin/audit", hint: t.palette.auditHint },
-    ],
-    [t]
-  );
+    ];
+    if (isAdmin) {
+      base.push(
+        { label: t.palette.admin, kbd: "D", href: "/admin/dashboard", hint: t.palette.adminHint },
+        { label: t.palette.audit, href: "/admin/audit", hint: t.palette.auditHint }
+      );
+    }
+    return base;
+  }, [t, isAdmin]);
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -214,7 +223,7 @@ export function CommandPalette() {
           </div>
           <ul className="max-h-[50vh] overflow-y-auto p-2">
             {searching ? (
-              <li className="px-4 py-3 text-sm text-fg-muted">Searching ecosystem…</li>
+              <li className="px-4 py-3 text-sm text-fg-muted">{t.palette.searchSearching}</li>
             ) : null}
             {filtered.map((a) => (
               <li key={a.href}>
@@ -243,7 +252,7 @@ export function CommandPalette() {
               </li>
             ))}
             {!searching && filtered.length === 0 ? (
-              <li className="px-4 py-3 text-sm text-fg-muted">No ecosystem signals found.</li>
+              <li className="px-4 py-3 text-sm text-fg-muted">{t.palette.searchEmpty}</li>
             ) : null}
           </ul>
         </div>

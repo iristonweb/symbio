@@ -23,6 +23,18 @@ def parse_host_port(address: str) -> tuple[str, int]:
     return address, 0
 
 
+def is_valid_host_port(host: str, port: int) -> bool:
+    if not host or port < 1 or port > 65535:
+        return False
+    parts = host.split(".")
+    if len(parts) != 4:
+        return False
+    try:
+        return all(0 <= int(part) <= 255 for part in parts)
+    except ValueError:
+        return False
+
+
 def extract_external_id(url: str) -> str | None:
     path = urlparse(url).path.strip("/")
     parts = path.split("/")

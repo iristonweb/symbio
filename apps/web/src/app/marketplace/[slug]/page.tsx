@@ -8,6 +8,7 @@ import { useLocale } from "@/components/LocaleProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export default function MarketplaceProductPage() {
   const { t } = useLocale();
@@ -31,7 +32,16 @@ export default function MarketplaceProductPage() {
   }, [slug]);
 
   if (loading) return <Skeleton className="h-96" />;
-  if (!product) return <p className="text-fg-muted">{t.marketplace.productNotFound}</p>;
+  if (!product) {
+    return (
+      <EmptyState
+        title={t.marketplace.productNotFound}
+        description={t.marketplace.emptyDesc}
+        actionLabel={t.common.backToCatalog}
+        actionHref="/marketplace"
+      />
+    );
+  }
 
   const addToCart = async () => {
     try {
@@ -64,7 +74,10 @@ export default function MarketplaceProductPage() {
           <div className="relative min-h-[280px] overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_20%_20%,rgb(var(--primary)_/_0.3),transparent_35%),radial-gradient(circle_at_80%_20%,rgb(var(--violet)_/_0.24),transparent_35%),linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))]">
             {product.cover_url ? <img src={product.cover_url} alt="" className="h-full w-full object-cover" /> : null}
             <div className="absolute inset-0 ecosystem-grid opacity-30" />
-            <div className="absolute bottom-4 left-4 rounded-full border border-accent/30 bg-black/55 px-3 py-1 text-xs text-accent backdrop-blur-xl">
+            <div
+              className="absolute bottom-4 left-4 rounded-full border border-accent/30 bg-black/55 px-3 py-1 text-xs text-accent backdrop-blur-xl"
+              title={t.marketplace.verifiedDesc}
+            >
               {t.marketplace.verified}
             </div>
           </div>
@@ -107,8 +120,22 @@ export default function MarketplaceProductPage() {
             <p className="mt-4 text-sm text-fg-muted">
               ★ {product.rating_avg.toFixed(1)} · {product.sales_count} {t.marketplace.sales}
             </p>
+            <p className="mt-2 text-xs text-fg-muted">{t.marketplace.refunds}</p>
           </div>
         </div>
+      </section>
+
+      <section className="holo-panel rounded-[2rem] p-6">
+        <h2 className="text-xl font-semibold">{t.marketplace.authorCard}</h2>
+        <p className="mt-2 text-sm text-fg-muted">
+          Creator · {product.creator_id.slice(0, 8)}
+        </p>
+        <p className="mt-2 text-xs text-fg-muted">{t.marketplace.verifiedDesc}</p>
+      </section>
+
+      <section className="holo-panel rounded-[2rem] p-6">
+        <h2 className="text-lg font-semibold">Reviews</h2>
+        <p className="mt-2 text-sm text-fg-muted">{t.marketplace.reviewsSoon}</p>
       </section>
 
       <section className="holo-panel rounded-[2rem] p-6">
@@ -128,7 +155,7 @@ export default function MarketplaceProductPage() {
       </section>
 
       {toast ? (
-        <div className="fixed bottom-5 right-5 z-[90] rounded-2xl border border-primary/30 bg-black/80 px-4 py-3 text-sm text-fg shadow-glass backdrop-blur-xl">
+        <div className="fixed bottom-24 right-5 z-[90] rounded-2xl border border-primary/30 bg-black/80 px-4 py-3 text-sm text-fg shadow-glass backdrop-blur-xl lg:bottom-5">
           {toast}
         </div>
       ) : null}

@@ -75,7 +75,7 @@ export function EcosystemRadarPanel({ fallbackServers = [] }: Props) {
             >
               <span className="absolute inset-0 h-9 w-9 animate-ping rounded-full bg-primary/15" />
               <span className="relative block h-9 w-9 rounded-full border border-primary/30 bg-black/75 shadow-[0_0_24px_rgb(var(--primary)_/_0.4)]" />
-              <span className="absolute left-10 top-0 hidden min-w-[120px] whitespace-nowrap rounded-xl border border-white/12 bg-black/80 px-3 py-1.5 text-xs backdrop-blur-xl group-hover:block">
+              <span className="absolute left-10 top-0 z-20 hidden max-w-[200px] rounded-xl border border-white/12 bg-black/80 px-3 py-1.5 text-xs backdrop-blur-xl group-hover:block sm:max-w-[240px]">
                 <span className="font-medium text-fg">{server.name}</span>
                 <span className="mt-0.5 block text-fg-muted">
                   {server.game} · {server.online}/{server.max_players}

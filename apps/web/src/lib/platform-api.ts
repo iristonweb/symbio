@@ -170,6 +170,15 @@ export const platformApi = {
     fetchApi<{ items: ApiArticle[] }>(`/articles${type ? `?type=${type}` : ""}`),
   article: (slug: string) => fetchApi<ApiArticle>(`/articles/${slug}`),
   contests: () => fetchApi<{ items: { id: string; slug: string; title: string; prize_summary?: string }[] }>(`/contests`),
+  contest: (slug: string) =>
+    fetchApi<{
+      id: string;
+      slug: string;
+      title: string;
+      description?: string;
+      prize_summary?: string;
+      status: string;
+    }>(`/contests/${slug}`),
   plans: (audience?: string) =>
     fetchApi<{ items: ApiPlan[] }>(`/billing/plans${audience ? `?audience=${audience}` : ""}`),
   wallet: () => fetchApi<{ balance_credits: number; transactions: { amount: number; tx_type: string; description?: string; created_at: string }[] }>(`/billing/wallet`),
@@ -186,4 +195,44 @@ export const platformApi = {
   library: () => fetchApi<{ items: (ApiMarketplaceProduct & { granted_at?: string })[] }>("/marketplace/library"),
   search: (q: string, index = "servers") =>
     fetchApi<{ hits: { id: string; name?: string; title?: string }[] }>(`/search?q=${encodeURIComponent(q)}&index=${index}`),
+  voteServer: (serverId: string) =>
+    fetchApi<VoteResult>(`/servers/${serverId}/vote`, { method: "POST" }),
+  referralInfo: () =>
+    fetchApi<ReferralInfo>("/auth/me/referral"),
+  authIdentities: () =>
+    fetchApi<AuthIdentitiesInfo>("/auth/me/identities"),
+  tokenWallet: () =>
+    fetchApi<{ balance_tokens: number; balance_credits: number }>("/auth/me/wallet"),
+};
+
+export type VoteResult = {
+  vote_id: string;
+  server_id: string;
+  votes: number;
+  rewarded: boolean;
+  earned_tokens: number;
+  multiplier: number;
+  wallet_balance: number;
+  next_vote_at: string | null;
+  social_providers: string[];
+  email_verified: boolean;
+};
+
+export type ReferralInfo = {
+  code: string;
+  referral_url: string;
+  pending_count: number;
+  qualified_count: number;
+  target_qualified: number;
+  top_plan_slug: string;
+  top_plan_days: number;
+  milestones_granted: number[];
+  milestones: Record<string, number>;
+};
+
+export type AuthIdentitiesInfo = {
+  providers: Record<string, { linked: boolean; email?: string | null }>;
+  social_providers: string[];
+  vote_multiplier: number;
+  email_verified: boolean;
 };

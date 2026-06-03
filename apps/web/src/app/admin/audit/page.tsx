@@ -4,6 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useLocale } from "@/components/LocaleProvider";
+import { useAuth } from "@/components/AuthProvider";
 import { GlowCard } from "@/components/immersive/GlowCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -21,6 +22,7 @@ type AuditEvent = {
 
 export default function AuditPage() {
   const { t } = useLocale();
+  const { logout } = useAuth();
   const router = useRouter();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
   const [events, setEvents] = React.useState<AuditEvent[]>([]);
@@ -87,13 +89,7 @@ export default function AuditPage() {
         <Button variant="secondary" onClick={load} disabled={loading}>
           {t.common.refresh}
         </Button>
-        <Button
-          variant="ghost"
-          onClick={() => {
-            localStorage.removeItem("token");
-            router.push("/auth/login");
-          }}
-        >
+        <Button variant="ghost" onClick={logout}>
           {t.nav.signOut}
         </Button>
       </div>

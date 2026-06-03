@@ -49,7 +49,7 @@ export default function AdminDashboardPage() {
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-4">
+      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <MetricCapsule label="servers" value={String(metrics.servers)} hint="tracked worlds" />
         <MetricCapsule label="online" value={String(metrics.online)} hint="live players" />
         <MetricCapsule label="avg load" value={`${metrics.avg_load}%`} hint="capacity pressure" />

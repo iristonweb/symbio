@@ -36,7 +36,14 @@ async def get_wallet_balance(db: AsyncSession, user_id: UUID) -> int:
     return wallet.balance_credits
 
 
-async def add_credits(db: AsyncSession, user_id: UUID, amount: int, tx_type: str, description: str | None = None) -> Wallet:
+async def add_credits(
+    db: AsyncSession,
+    user_id: UUID,
+    amount: int,
+    tx_type: str,
+    description: str | None = None,
+    meta: dict | None = None,
+) -> Wallet:
     wallet = await get_or_create_wallet(db, user_id)
     wallet.balance_credits += amount
     wallet.updated_at = datetime.now(timezone.utc)
@@ -46,6 +53,7 @@ async def add_credits(db: AsyncSession, user_id: UUID, amount: int, tx_type: str
             amount=amount,
             tx_type=tx_type,
             description=description,
+            meta=meta or {},
         )
     )
     return wallet
@@ -118,6 +126,41 @@ async def create_promotion(
     db.add(promo)
     await db.flush()
     return promo
+
+
+async def grant_plan_subscription(
+    db: AsyncSession,
+    user_id: UUID,
+    plan_slug: str,
+    days: int = 30,
+    source: str = "referral_milestone",
+) -> Subscription | None:
+    plan = await get_plan_by_slug(db, plan_slug)
+    if not plan:
+        return None
+    now = datetime.now(timezone.utc)
+    existing = (
+        await db.execute(
+            select(Subscription)
+            .where(Subscription.user_id == user_id, Subscription.status == "active")
+            .order_by(Subscription.expires_at.desc())
+        )
+    ).scalar_one_or_none()
+    base = existing.expires_at if existing and existing.expires_at and existing.expires_at > now else now
+    expires = base + timedelta(days=days)
+    if existing and existing.plan_id == plan.id:
+        existing.expires_at = expires
+        sub = existing
+    else:
+        sub = Subscription(
+            user_id=user_id,
+            plan_id=plan.id,
+            status="active",
+            expires_at=expires,
+        )
+        db.add(sub)
+    await db.flush()
+    return sub
 
 
 async def list_wallet_transactions(db: AsyncSession, user_id: UUID, limit: int = 50):

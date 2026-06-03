@@ -10,6 +10,7 @@ from app.core.rbac import user_capabilities
 from app.core.security import hash_password, verify_password, create_access_token
 from app.db.crud import users as users_crud
 from app.db.crud import auth_tokens as tokens_crud
+from app.db.crud import referrals as referrals_crud
 from app.db.crud.audit import add_audit
 from app.db.models.user import User
 from app.services.email_service import send_email, verification_email_link
@@ -24,6 +25,7 @@ class RegisterIn(BaseModel):
     password: str = Field(min_length=8)
     nickname: str | None = None
     auto_nickname: bool = True
+    referral_code: str | None = None
 
 
 class LoginIn(BaseModel):
@@ -94,6 +96,8 @@ async def register(payload: RegisterIn, db: AsyncSession = Depends(get_db)):
     raw = await tokens_crud.create_verification_token(db, user.id, "email_verify")
     link = verification_email_link(raw)
     send_email(user.email, "Verify your SYMBIO email", f"Confirm: {link}")
+    await referrals_crud.attach_referral(db, user.id, payload.referral_code)
+    await referrals_crud.get_or_create_referral_code(db, user.id, user.nickname)
     await add_audit(db, actor_user_id=user.id, action="user.register", entity_type="user", entity_id=str(user.id), meta={"email": user.email})
     await db.commit()
     return _issue_token(user)
@@ -115,6 +119,42 @@ async def login(payload: LoginIn, db: AsyncSession = Depends(get_db)):
 @router.get("/me", response_model=UserOut)
 async def me(user: User = Depends(get_current_user)):
     return _user_out(user)
+
+
+@router.get("/me/referral")
+async def me_referral(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    stats = await referrals_crud.get_referral_stats(db, user.id, user.nickname)
+    from app.core.config import settings
+
+    await db.commit()
+    return {
+        **stats,
+        "referral_url": f"{settings.WEB_BASE_URL}/auth/register?ref={stats['code']}",
+    }
+
+
+@router.get("/me/identities")
+async def me_identities(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    rows = await tokens_crud.list_identities_for_user(db, user.id)
+    providers = {r.provider: {"linked": True, "email": r.provider_email} for r in rows}
+    from app.services import rewards as reward_cfg
+
+    oauth = {p for p in providers if p in reward_cfg.SOCIAL_PROVIDERS}
+    multiplier = reward_cfg.compute_trust_multiplier(user.email_verified, oauth)
+    return {
+        "providers": providers,
+        "social_providers": sorted(oauth),
+        "vote_multiplier": multiplier,
+        "email_verified": user.email_verified,
+    }
+
+
+@router.get("/me/wallet")
+async def me_wallet(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    from app.db.crud import billing as billing_crud
+
+    balance = await billing_crud.get_wallet_balance(db, user.id)
+    return {"balance_tokens": balance, "balance_credits": balance}
 
 
 @router.patch("/me", response_model=UserOut)

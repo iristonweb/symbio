@@ -28,6 +28,7 @@ function ServersPageInner() {
   const [sort, setSort] = React.useState<(typeof SORT_KEYS)[number]>("online");
   const [servers, setServers] = React.useState<ApiServer[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [apiError, setApiError] = React.useState(false);
 
   const sortLabels: Record<(typeof SORT_KEYS)[number], string> = {
     online: t.servers.sortOnline,
@@ -49,10 +50,17 @@ function ServersPageInner() {
 
   React.useEffect(() => {
     setLoading(true);
+    setApiError(false);
     platformApi
       .servers({ sort, q: query || undefined, style: style === "all" ? undefined : style })
-      .then((r) => setServers(r.items))
-      .catch(() => setServers([]))
+      .then((r) => {
+        setServers(r.items);
+        setApiError(false);
+      })
+      .catch(() => {
+        setServers([]);
+        setApiError(true);
+      })
       .finally(() => setLoading(false));
   }, [query, sort, style]);
 
@@ -63,38 +71,44 @@ function ServersPageInner() {
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,5,13,0.92),rgba(3,5,13,0.52),rgba(3,5,13,0.88))]" />
         <div className="relative max-w-3xl">
           <Badge tone="info">{t.servers.badge}</Badge>
-          <h1 className="mt-4 text-5xl font-semibold leading-none tracking-tight sm:text-7xl">
+          <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
             {t.servers.title} <span className="text-gradient">{t.servers.titleAccent}</span>
           </h1>
           <p className="mt-5 text-base leading-8 text-fg-muted">{t.servers.subtitle}</p>
         </div>
       </section>
 
-      <section className="sticky top-[104px] z-30 rounded-[2rem] border border-white/10 bg-[rgba(3,5,13,0.76)] p-3 backdrop-blur-2xl">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t.servers.searchPlaceholder}
-            className="h-13"
-          />
-          <div className="flex flex-wrap gap-2">
-            {SORT_KEYS.map((s) => (
-              <Chip key={s} active={sort === s} onClick={() => setSort(s)}>
-                {sortLabels[s]}
-              </Chip>
-            ))}
+      <section className="sticky-below-header z-30 rounded-[2rem] border border-white/10 bg-[rgba(3,5,13,0.76)] p-4 backdrop-blur-2xl sm:p-5">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t.servers.searchPlaceholder}
+              className="h-12 min-w-0 flex-1 sm:max-w-md"
+            />
+            <Link href="/studio" className="shrink-0">
+              <Button size="sm" className="w-full sm:w-auto">
+                {t.servers.addServer}
+              </Button>
+            </Link>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {STYLE_KEYS.map((s) => (
-              <Chip key={s} active={style === s} onClick={() => setStyle(s)}>
-                {styleLabels[s]}
-              </Chip>
-            ))}
+          <div className="flex flex-col gap-3 border-t border-white/8 pt-4">
+            <div className="flex flex-wrap gap-2">
+              {SORT_KEYS.map((s) => (
+                <Chip key={s} active={sort === s} onClick={() => setSort(s)}>
+                  {sortLabels[s]}
+                </Chip>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {STYLE_KEYS.map((s) => (
+                <Chip key={s} active={style === s} onClick={() => setStyle(s)}>
+                  {styleLabels[s]}
+                </Chip>
+              ))}
+            </div>
           </div>
-          <Link href="/studio">
-            <Button size="sm">{t.servers.addServer}</Button>
-          </Link>
         </div>
       </section>
 
@@ -144,7 +158,16 @@ function ServersPageInner() {
               </tbody>
             </table>
             {servers.length === 0 ? (
-              <div className="p-8 text-center text-fg-muted">{t.servers.empty}</div>
+              <div className="p-8 text-center text-fg-muted">
+                {apiError ? (
+                  <>
+                    <p className="font-medium text-fg">{t.servers.apiErrorTitle}</p>
+                    <p className="mt-2 text-sm">{t.servers.apiErrorDesc}</p>
+                  </>
+                ) : (
+                  t.servers.empty
+                )}
+              </div>
             ) : null}
           </div>
         </section>
@@ -156,9 +179,9 @@ function ServersPageInner() {
             return (
               <Link key={server.id} href={`/servers/${server.id}`} className="organism-panel rounded-[2rem] p-6">
                 <div className="flex justify-between gap-2">
-                  <div>
+                  <div className="min-w-0">
                     <Badge tone="info">{server.game}</Badge>
-                    <h2 className="mt-2 text-xl font-semibold">{server.name}</h2>
+                    <h2 className="mt-2 truncate text-xl font-semibold">{server.name}</h2>
                     <p className="mt-1 text-xs text-fg-muted">
                       {server.region ?? "—"} · {server.mode ?? "—"}
                     </p>
@@ -189,7 +212,16 @@ function ServersPageInner() {
             );
           })}
           {servers.length === 0 ? (
-            <div className="col-span-2 holo-panel rounded-[2rem] p-10 text-center text-fg-muted">{t.servers.empty}</div>
+            <div className="col-span-2 holo-panel rounded-[2rem] p-10 text-center text-fg-muted">
+              {apiError ? (
+                <>
+                  <p className="font-medium text-fg">{t.servers.apiErrorTitle}</p>
+                  <p className="mt-2 text-sm">{t.servers.apiErrorDesc}</p>
+                </>
+              ) : (
+                t.servers.empty
+              )}
+            </div>
           ) : null}
         </section>
       )}

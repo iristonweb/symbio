@@ -23,6 +23,19 @@
   --radius: 20px;
   --mx: 50%;
   --my: 40%;
+  --header-height: 72px;
+  --bottom-nav-offset: 0px;
+}
+
+.sticky-below-header {
+  position: sticky;
+  top: var(--header-height);
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --bottom-nav-offset: 88px;
+  }
 }
 
 html {
@@ -276,7 +289,7 @@ body {
 .ecosystem-backdrop {
   background-image:
     linear-gradient(180deg, rgba(3, 5, 13, 0.16), rgba(3, 5, 13, 0.72) 52%, rgb(3 5 13)),
-    url("/symbio-ecosystem-bg.png");
+    url("/symbio-ecosystem-bg.svg");
   background-position: center top;
   background-size: cover;
   background-repeat: no-repeat;
@@ -285,7 +298,7 @@ body {
 .banner-control {
   background-image:
     linear-gradient(90deg, rgba(3, 5, 13, 0.2), rgba(3, 5, 13, 0.86)),
-    url("/symbio-control-banner.png");
+    url("/symbio-control-banner.svg");
   background-position: center;
   background-size: cover;
 }
@@ -293,7 +306,7 @@ body {
 .banner-server {
   background-image:
     linear-gradient(90deg, rgba(3, 5, 13, 0.28), rgba(3, 5, 13, 0.78)),
-    url("/symbio-server-banner.png");
+    url("/symbio-server-banner.svg");
   background-position: center;
   background-size: cover;
 }

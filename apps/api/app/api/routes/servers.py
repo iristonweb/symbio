@@ -1,12 +1,16 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
+from app.db.models.server import Server
 from app.db.crud.servers import list_servers, get_server, create_server, claim_server, list_top_online
+from app.db.crud import votes as votes_crud
+from app.db.crud import referrals as referrals_crud
 from app.db.models.user import User
-from app.schemas.platform import ServerCreate, ClaimRequest
+from app.schemas.platform import ServerCreate, ClaimRequest, VoteResponse
 
 router = APIRouter()
 
@@ -69,6 +73,31 @@ async def create_server_route(
     )
     await db.commit()
     return {"id": str(s.id), "slug": s.slug, "moderation_status": s.moderation_status}
+
+
+@router.post("/{server_id}/vote", response_model=VoteResponse)
+async def vote_server_route(
+    server_id: UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    server_row = (await db.execute(select(Server).where(Server.id == server_id))).scalar_one_or_none()
+    if not server_row:
+        raise HTTPException(status_code=404, detail="Server not found")
+    try:
+        result = await votes_crud.cast_server_vote(
+            db,
+            user.id,
+            server_id,
+            email_verified=user.email_verified,
+            user_created_at=user.created_at,
+            server_owner_id=server_row.owner_id,
+        )
+    except votes_crud.VoteError as e:
+        raise HTTPException(status_code=400, detail={"code": e.code, "message": e.message})
+    await referrals_crud.qualify_referral_on_action(db, user.id)
+    await db.commit()
+    return result
 
 
 @router.post("/claim")

@@ -56,6 +56,12 @@ async def get_identity(db: AsyncSession, provider: str, provider_user_id: str) -
     ).scalar_one_or_none()
 
 
+async def list_identities_for_user(db: AsyncSession, user_id: UUID) -> list[AuthIdentity]:
+    return (
+        await db.execute(select(AuthIdentity).where(AuthIdentity.user_id == user_id))
+    ).scalars().all()
+
+
 async def link_identity(
     db: AsyncSession,
     user_id: UUID,

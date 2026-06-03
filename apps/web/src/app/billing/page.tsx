@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { platformApi, fetchApi, type ApiPlan } from "@/lib/platform-api";
 import { useLocale } from "@/components/LocaleProvider";
 import { useAuth } from "@/components/AuthProvider";
@@ -9,21 +10,23 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Skeleton } from "@/components/ui/Skeleton";
 
-const AUDIENCES = [
-  { id: "user", label: "Игроки" },
-  { id: "site_owner", label: "Владельцы серверов" },
-  { id: "creator", label: "Модеры / Creators" },
-] as const;
+type AudienceId = "user" | "site_owner" | "creator";
 
 export default function BillingPage() {
   const { t } = useLocale();
   const { user } = useAuth();
-  const [audience, setAudience] = React.useState<(typeof AUDIENCES)[number]["id"]>("user");
+  const [audience, setAudience] = React.useState<AudienceId>("user");
   const [plans, setPlans] = React.useState<ApiPlan[]>([]);
   const [balance, setBalance] = React.useState<number | null>(null);
   const [txs, setTxs] = React.useState<{ amount: number; tx_type: string; description?: string; created_at: string }[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [msg, setMsg] = React.useState<string | null>(null);
+
+  const audiences: { id: AudienceId; label: string }[] = [
+    { id: "user", label: t.billing.audienceUser },
+    { id: "site_owner", label: t.billing.audienceOwner },
+    { id: "creator", label: t.billing.audienceCreator },
+  ];
 
   React.useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -65,14 +68,18 @@ export default function BillingPage() {
           {t.billing.title} <span className="text-gradient">{t.billing.titleAccent}</span>
         </h1>
         <p className="mt-3 text-fg-muted">{t.billing.subtitle}</p>
-        <div className="mt-5 flex flex-wrap gap-2 text-xs text-fg-muted">
-          <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1">Защищённая лицензия</span>
-          <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1">RUB invoices</span>
-          <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1">Creator revenue share</span>
+        <div className="mt-5 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100">
+          {t.billing.mockBanner}
         </div>
+        <div className="mt-5 flex flex-wrap gap-2 text-xs text-fg-muted">
+          <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1">{t.billing.trustLicense}</span>
+          <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1">{t.billing.trustRub}</span>
+          <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1">{t.billing.trustRevenue}</span>
+        </div>
+        <p className="mt-3 text-sm text-fg-muted">{t.rewards.spendTokens}</p>
         {balance !== null ? (
           <p className="mt-4 text-lg">
-            {t.billing.balance}: <strong>{balance}</strong> {t.billing.credits}
+            {t.billing.balance}: <strong>{balance}</strong> {t.billing.tokensLabel ?? t.billing.credits}
           </p>
         ) : (
           <p className="mt-4 text-fg-muted">{t.billing.signInWallet}</p>
@@ -80,7 +87,7 @@ export default function BillingPage() {
       </section>
 
       <div className="flex flex-wrap gap-2">
-        {AUDIENCES.map((a) => (
+        {audiences.map((a) => (
           <Chip key={a.id} active={audience === a.id} onClick={() => setAudience(a.id)}>
             {a.label}
           </Chip>
@@ -102,22 +109,29 @@ export default function BillingPage() {
               </p>
               <p className="text-xs text-fg-muted">
                 {plan.credits_monthly} {t.billing.credits}
-                {plan.commission_percent != null ? ` · комиссия ${plan.commission_percent}%` : ""}
+                {plan.commission_percent != null ? ` · ${plan.commission_percent}%` : ""}
               </p>
               <ul className="mt-3 space-y-1 text-xs text-fg-muted">
                 {plan.features.slice(0, 5).map((f) => (
                   <li key={f}>· {f}</li>
                 ))}
               </ul>
-              <Button
-                className="mt-6 w-full"
-                size="sm"
-                variant={plan.price_monthly > 0 ? "premium" : "secondary"}
-                onClick={() => checkout(plan.slug)}
-                disabled={!user}
-              >
-                {plan.price_monthly === 0 ? t.billing.activate : t.billing.subscribe}
-              </Button>
+              {user ? (
+                <Button
+                  className="mt-6 w-full"
+                  size="sm"
+                  variant={plan.price_monthly > 0 ? "premium" : "secondary"}
+                  onClick={() => checkout(plan.slug)}
+                >
+                  {plan.price_monthly === 0 ? t.billing.activate : t.billing.subscribe}
+                </Button>
+              ) : (
+                <Link href="/auth/login" className="mt-6 block">
+                  <Button className="w-full" size="sm" variant="premium">
+                    {t.billing.signInToSubscribe}
+                  </Button>
+                </Link>
+              )}
             </div>
           ))}
         </div>
@@ -125,23 +139,23 @@ export default function BillingPage() {
 
       {!loading && plans.length > 0 ? (
         <section className="holo-panel rounded-[2rem] p-6">
-          <h2 className="text-2xl font-semibold">Сравнение возможностей</h2>
+          <h2 className="text-2xl font-semibold">{t.billing.compareTitle}</h2>
           <div className="mt-5 overflow-x-auto">
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="text-xs uppercase tracking-[0.18em] text-fg-muted">
                 <tr>
-                  <th className="py-3">План</th>
-                  <th className="py-3 text-right">Цена</th>
-                  <th className="py-3 text-right">Кредиты</th>
-                  <th className="py-3 text-right">Комиссия</th>
-                  <th className="py-3">Ключевые фичи</th>
+                  <th className="py-3">Plan</th>
+                  <th className="py-3 text-right">Price</th>
+                  <th className="py-3 text-right">{t.billing.credits}</th>
+                  <th className="py-3 text-right">%</th>
+                  <th className="py-3">Features</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
                 {plans.map((plan) => (
                   <tr key={plan.id}>
                     <td className="py-3 font-medium">{plan.name}</td>
-                    <td className="py-3 text-right">{plan.price_monthly === 0 ? "0 ₽" : `${plan.price_monthly} ₽/мес`}</td>
+                    <td className="py-3 text-right">{plan.price_monthly === 0 ? "0 ₽" : `${plan.price_monthly} ₽`}</td>
                     <td className="py-3 text-right">{plan.credits_monthly}</td>
                     <td className="py-3 text-right">{plan.commission_percent != null ? `${plan.commission_percent}%` : "—"}</td>
                     <td className="py-3 text-fg-muted">{plan.features.slice(0, 4).join(", ")}</td>
@@ -152,6 +166,16 @@ export default function BillingPage() {
           </div>
         </section>
       ) : null}
+
+      <section className="holo-panel rounded-[2rem] p-6">
+        <h2 className="text-2xl font-semibold">{t.billing.faqTitle}</h2>
+        <ul className="mt-4 space-y-3 text-sm text-fg-muted">
+          <li>· {t.billing.faqCancel}</li>
+          <li>· {t.billing.faqRefund}</li>
+          <li>· {t.billing.faqCredits}</li>
+          <li>· {t.billing.faqPromote}</li>
+        </ul>
+      </section>
 
       {txs.length > 0 ? (
         <section>

@@ -32,7 +32,12 @@ export default function DocsPage() {
     <div className="space-y-10 pb-12">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
         <PageHero badge={t.docs.badge} title={t.docs.title} titleAccent={t.docs.titleAccent} subtitle={t.docs.subtitle}>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Link href="/help">
+              <Button variant="premium" size="sm">
+                {t.help.title}
+              </Button>
+            </Link>
             <Link href="/admin/audit">
               <Button variant="outline" size="sm">
                 {t.docs.audit}
@@ -53,10 +58,10 @@ export default function DocsPage() {
             {ENDPOINTS.map(([k, v]) => (
               <div
                 key={k}
-                className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm"
+                className="flex flex-col gap-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
               >
-                <span className="text-fg">{k}</span>
-                <span className="font-mono text-xs text-fg-muted">{v}</span>
+                <span className="shrink-0 text-fg">{k}</span>
+                <span className="break-all font-mono text-xs text-fg-muted sm:text-right">{v}</span>
               </div>
             ))}
           </div>

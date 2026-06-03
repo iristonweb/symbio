@@ -82,9 +82,16 @@ export default function ContestsPage() {
                   {t.contests.endsAt}: {formatEnds(c.ends_at)}
                 </p>
               ) : null}
-              <Button className="mt-4" size="sm" onClick={() => join(c.id)}>
-                {t.contests.join}
-              </Button>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link href={`/contests/${c.slug}`}>
+                  <Button size="sm" variant="outline">
+                    {t.contests.viewDetails}
+                  </Button>
+                </Link>
+                <Button size="sm" onClick={() => join(c.id)}>
+                  {t.contests.join}
+                </Button>
+              </div>
             </div>
           ))}
         </div>

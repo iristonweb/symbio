@@ -1,8 +1,17 @@
 "use client";
 
 import * as React from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/platform-api";
-import { AuthUser, cacheUser, clearToken, getCachedUser, getToken, setToken } from "@/lib/auth";
+import {
+  AuthUser,
+  cacheUser,
+  clearToken,
+  getCachedUser,
+  getToken,
+  requiresAuthRedirect,
+  setToken,
+} from "@/lib/auth";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -15,6 +24,8 @@ type AuthContextValue = {
 const AuthContext = React.createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = React.useState<AuthUser | null>(null);
   const [loading, setLoading] = React.useState(true);
 
@@ -47,10 +58,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await refresh();
   };
 
-  const logout = () => {
+  const logout = React.useCallback(() => {
     clearToken();
     setUser(null);
-  };
+    if (requiresAuthRedirect(pathname)) {
+      router.push("/auth/login");
+    }
+  }, [pathname, router]);
 
   return (
     <AuthContext.Provider value={{ user, loading, refresh, logout, setAuthToken }}>

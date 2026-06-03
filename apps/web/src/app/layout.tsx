@@ -21,11 +21,15 @@ const fontDisplay = Onest({
 export const metadata: Metadata = {
   title: "SYMBIO — экосистема игровых серверов",
   description:
-    "Мониторинг серверов, проекты сообществ, рейтинги и кабинет владельца — премиальная игровая экосистема SYMBIO.",
+    "Server Hub, Marketplace и Studio — найти сервер, купить моды, управлять сообществом в экосистеме SYMBIO.",
+  openGraph: {
+    title: "SYMBIO — экосистема игровых серверов",
+    description: "Server Hub · Marketplace · Studio",
+  },
   icons: {
-    icon: "/symbio-logo.png",
-    shortcut: "/symbio-logo.png",
-    apple: "/symbio-logo.png",
+    icon: "/symbio-logo.svg",
+    shortcut: "/symbio-logo.svg",
+    apple: "/symbio-logo.svg",
   },
 };
 

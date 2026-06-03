@@ -19,6 +19,8 @@ import { Input } from "@/components/ui/Input";
 import { EcosystemRadarPanel } from "@/components/immersive/EcosystemRadar";
 import { useLocale } from "@/components/LocaleProvider";
 import { useUiMode } from "@/components/UiModeProvider";
+import { useAuth } from "@/components/AuthProvider";
+import { hasRole } from "@/lib/auth";
 import { platformApi, type EcosystemRadar } from "@/lib/platform-api";
 
 type HomeServer = {
@@ -36,6 +38,7 @@ type HomeServer = {
 export default function HomePage() {
   const { t } = useLocale();
   const { mode } = useUiMode();
+  const { user } = useAuth();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
   const [query, setQuery] = React.useState("");
   const [selectedFilter, setSelectedFilter] = React.useState<HeroFilterId>("all");
@@ -91,7 +94,8 @@ export default function HomePage() {
       href: server.href,
     })) ?? [];
 
-  const sourceServers = liveServers.length > 0 ? liveServers : fallbackServers;
+  const usingDemoData = liveServers.length === 0;
+  const sourceServers = usingDemoData ? fallbackServers : liveServers;
   const filtered = sourceServers.filter((server) => {
     const haystack = `${server.name} ${server.game} ${server.region ?? ""} ${server.mode ?? ""}`.toLowerCase();
     const matchesQuery = haystack.includes(query.toLowerCase().trim());
@@ -128,6 +132,13 @@ export default function HomePage() {
               <Badge tone="info">{t.home.badge}</Badge>
               {apiOnline ? (
                 <Badge tone="success">{t.home.apiAlive}</Badge>
+              ) : (
+                <Badge tone="warning">{t.home.apiSleep}</Badge>
+              )}
+              {usingDemoData ? (
+                <Badge tone="warning" title={t.home.demoDataHint}>
+                  {t.home.demoData}
+                </Badge>
               ) : null}
             </div>
             <h1 className="font-display mt-5 max-w-3xl text-4xl font-semibold leading-[1.05] tracking-tight text-fg sm:text-5xl lg:text-6xl">
@@ -160,13 +171,17 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="mt-8 grid max-w-xl gap-3 sm:grid-cols-3">
+            <div className="mt-8 grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-3">
               <MetricCapsule
                 label={t.home.benefitOnline}
                 value={onlineTotal.toLocaleString("ru-RU")}
                 hint={t.home.benefitOnlineHint}
               />
-              <MetricCapsule label={t.home.benefitRadar} value="Live" hint={t.home.benefitRadarHint} />
+              <MetricCapsule
+                label={t.home.benefitRadar}
+                value={usingDemoData ? t.common.demo : "Live"}
+                hint={usingDemoData ? t.home.demoDataHint : t.home.benefitRadarHint}
+              />
               <MetricCapsule
                 label={t.home.benefitMatch}
                 value={filtered.length > 0 ? String(filtered.length) : "—"}
@@ -192,7 +207,7 @@ export default function HomePage() {
                       </div>
                     </div>
                     <span className="rounded-full border border-primary/25 bg-primary/10 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-primary">
-                      {server.status}
+                      {usingDemoData ? t.common.demo : server.status}
                     </span>
                   </div>
                   <div className="mt-3 text-xs text-fg-muted">
@@ -202,6 +217,38 @@ export default function HomePage() {
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-3">
+        {[
+          { title: t.home.pillarServers, desc: t.home.pillarServersDesc, href: "/servers" },
+          { title: t.home.pillarMarket, desc: t.home.pillarMarketDesc, href: "/marketplace" },
+          { title: t.home.pillarStudio, desc: t.home.pillarStudioDesc, href: "/studio" },
+        ].map((pillar) => (
+          <Link key={pillar.href} href={pillar.href} className="holo-panel rounded-[2rem] p-6 transition hover:border-primary/30">
+            <h3 className="text-xl font-semibold">{pillar.title}</h3>
+            <p className="mt-2 text-sm text-fg-muted">{pillar.desc}</p>
+          </Link>
+        ))}
+      </section>
+
+      <section className="holo-panel rounded-[2.5rem] p-6 sm:p-10">
+        <Badge tone="info">{t.home.audienceTitle}</Badge>
+        <div className="mt-6 grid gap-4 lg:grid-cols-3">
+          {[
+            { title: t.home.audiencePlayer, desc: t.home.audiencePlayerDesc, href: "/servers", cta: t.home.exploreWorlds },
+            { title: t.home.audienceOwner, desc: t.home.audienceOwnerDesc, href: "/studio", cta: t.home.ownerCta },
+            { title: t.home.audienceCreator, desc: t.home.audienceCreatorDesc, href: "/studio", cta: t.home.becomeCreator },
+          ].map((card) => (
+            <div key={card.title} className="rounded-[1.75rem] border border-white/10 bg-black/25 p-5">
+              <h3 className="text-lg font-semibold">{card.title}</h3>
+              <p className="mt-2 text-sm text-fg-muted">{card.desc}</p>
+              <Link href={card.href} className="mt-4 inline-block text-sm text-primary hover:text-fg">
+                {card.cta} →
+              </Link>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -276,14 +323,14 @@ export default function HomePage() {
             {(filtered.length > 0 ? filtered : sourceServers).slice(0, 2).map((server) => (
               <Link key={server.id} href={server.href} className="organism-panel rounded-[2rem] p-5 transition hover:border-primary/30">
                 <div className="flex items-start justify-between gap-3">
-                  <div>
+                  <div className="min-w-0">
                     <Badge tone={server.status === "online" ? "success" : "info"}>{server.game}</Badge>
-                    <h3 className="mt-3 text-xl font-semibold">{server.name}</h3>
+                    <h3 className="mt-3 truncate text-xl font-semibold">{server.name}</h3>
                     <p className="mt-1 text-sm text-fg-muted">
                       {server.region ?? "global"} · {server.mode ?? "ecosystem"}
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="shrink-0 text-right">
                     <div className="text-lg font-semibold text-gradient">{server.online}</div>
                     <div className="text-[11px] text-fg-muted">online</div>
                   </div>
@@ -302,7 +349,10 @@ export default function HomePage() {
 
       <section className="grid gap-6 lg:grid-cols-3">
         <div className="holo-panel rounded-[2rem] p-6 lg:col-span-2">
-          <Badge tone="warning">{t.home.seasonBadge}</Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone="warning">{t.home.seasonBadge}</Badge>
+            {usingDemoData ? <Badge tone="warning">{t.home.demoData}</Badge> : null}
+          </div>
           <h2 className="font-display mt-4 text-3xl font-semibold tracking-tight">{t.home.seasonTitle}</h2>
           <div className="mt-8 space-y-5">
             {seasonEvents.map((event) => (
@@ -323,7 +373,10 @@ export default function HomePage() {
         </div>
 
         <div className="holo-panel rounded-[2rem] p-6">
-          <Badge tone="info">{t.home.feedBadge}</Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone="info">{t.home.feedBadge}</Badge>
+            {usingDemoData ? <Badge tone="warning">{t.home.demoData}</Badge> : null}
+          </div>
           <h2 className="font-display mt-4 text-2xl font-semibold tracking-tight">{t.home.feedTitle}</h2>
           <div className="mt-5 space-y-3">
             {activityFeed.map((item) => (
@@ -336,21 +389,39 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="holo-panel rounded-[2.5rem] p-6 sm:p-10">
+        <Badge tone="success">{t.home.trustTitle}</Badge>
+        <ul className="mt-4 space-y-2 text-sm text-fg-muted">
+          <li>· {t.home.trustServers}</li>
+          <li>· {t.home.trustCreators}</li>
+          <li>· {t.home.trustMetrics}</li>
+        </ul>
+      </section>
+
       <section className="banner-control overflow-hidden rounded-[2.5rem] border border-white/10 p-6 sm:p-10">
         <div className="max-w-2xl">
           <Badge tone="info">{t.home.ownerBadge}</Badge>
           <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight">{t.home.ownerTitle}</h2>
           <p className="mt-4 text-sm leading-7 text-fg-muted">{t.home.ownerDesc}</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/admin/dashboard">
-              <Button>{t.home.openDashboard}</Button>
+            <Link href="/servers">
+              <Button>{t.home.exploreWorlds}</Button>
+            </Link>
+            <Link href="/marketplace">
+              <Button variant="outline">{t.home.openMarket}</Button>
             </Link>
             <Link href="/studio">
               <Button variant="outline">{t.home.addServer}</Button>
             </Link>
-            <Link href="/profile">
-              <Button variant="secondary">{t.home.joinCommunity}</Button>
-            </Link>
+            {user && hasRole(user, "admin") ? (
+              <Link href="/admin/dashboard">
+                <Button variant="secondary">{t.home.openDashboard}</Button>
+              </Link>
+            ) : (
+              <Link href={user ? "/profile" : "/auth/login"}>
+                <Button variant="secondary">{user ? t.home.myAccount : t.nav.signIn}</Button>
+              </Link>
+            )}
           </div>
         </div>
       </section>

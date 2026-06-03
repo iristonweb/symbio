@@ -138,9 +138,9 @@ export default function StudioPage() {
 
       {!user ? (
         <section className="holo-panel rounded-[2rem] p-6">
-          <h2 className="text-2xl font-semibold">Войдите, чтобы открыть Studio</h2>
+          <h2 className="text-2xl font-semibold">{t.studio.signInFirst}</h2>
           <Link href="/auth/login" className="mt-5 inline-block">
-            <Button>Войти</Button>
+            <Button>{t.nav.signIn}</Button>
           </Link>
         </section>
       ) : null}
@@ -149,9 +149,15 @@ export default function StudioPage() {
         <div className="flex flex-wrap gap-2">
           {(["dashboard", "product", "project", "server"] as const).map((tb) => (
             <Chip key={tb} active={tab === tb} onClick={() => setTab(tb)}>
-              {tb === "dashboard" ? "Dashboard" : tb === "product" ? "Продукт" : tb === "project" ? t.studio.project : t.studio.server}
+              {tb === "dashboard"
+                ? t.studio.tabDashboard
+                : tb === "product"
+                  ? t.studio.tabProduct
+                  : tb === "project"
+                    ? t.studio.tabProject
+                    : t.studio.tabServer}
             </Chip>
-        ))}
+          ))}
           <Link href="/billing" className="ml-auto text-sm text-primary hover:underline">
             {t.studio.billingLink}
           </Link>
@@ -207,22 +213,30 @@ export default function StudioPage() {
 
       {user && tab === "product" ? (
         <div className="holo-panel max-w-2xl space-y-4 rounded-[2rem] p-6">
-          <Input value={productTitle} onChange={(e) => setProductTitle(e.target.value)} placeholder="Название продукта" />
-          <Input value={productDesc} onChange={(e) => setProductDesc(e.target.value)} placeholder="Короткое описание" />
+          <Badge tone="info">{t.studio.wizardProductTitle}</Badge>
+          <p className="text-sm text-fg-muted">{t.studio.wizardProductDesc}</p>
+          <Input value={productTitle} onChange={(e) => setProductTitle(e.target.value)} placeholder={t.studio.productTitle} />
+          <Input value={productDesc} onChange={(e) => setProductDesc(e.target.value)} placeholder={t.studio.description} />
           <div className="grid gap-4 sm:grid-cols-3">
-            <Input value={productType} onChange={(e) => setProductType(e.target.value)} placeholder="mod / addon / plugin" />
-            <Input value={productGame} onChange={(e) => setProductGame(e.target.value)} placeholder="game slug" />
-            <Input value={productPrice} onChange={(e) => setProductPrice(e.target.value)} placeholder="Цена ₽" />
+            <Input value={productType} onChange={(e) => setProductType(e.target.value)} placeholder={t.studio.productType} />
+            <Input value={productGame} onChange={(e) => setProductGame(e.target.value)} placeholder={t.studio.gameSlug} />
+            <Input value={productPrice} onChange={(e) => setProductPrice(e.target.value)} placeholder="₽" />
           </div>
-          <Input value={productTags} onChange={(e) => setProductTags(e.target.value)} placeholder="tags через запятую" />
+          <Input value={productTags} onChange={(e) => setProductTags(e.target.value)} placeholder="tags" />
+          <div className="rounded-2xl border border-dashed border-white/15 p-4 text-xs text-fg-muted">
+            <p>{t.studio.uploadCover}</p>
+            <p className="mt-1">{t.studio.uploadFile}</p>
+            <p className="mt-2">{t.studio.uploadHint}</p>
+          </div>
           <Button disabled={loading || !productTitle} onClick={submitProduct}>
-            Отправить на модерацию
+            {t.studio.submitProduct}
           </Button>
         </div>
       ) : null}
 
       {user && tab === "project" ? (
         <div className="holo-panel max-w-xl space-y-4 rounded-[2rem] p-6">
+          <p className="text-sm text-fg-muted">{t.studio.wizardProjectDesc}</p>
           <Input value={projectName} onChange={(e) => setProjectName(e.target.value)} placeholder={t.studio.projectName} />
           <Input value={projectDesc} onChange={(e) => setProjectDesc(e.target.value)} placeholder={t.studio.description} />
           <Input value={gameSlugs} onChange={(e) => setGameSlugs(e.target.value)} placeholder={t.studio.gamesList} />
@@ -234,9 +248,10 @@ export default function StudioPage() {
 
       {user && tab === "server" ? (
         <div className="holo-panel max-w-xl space-y-4 rounded-[2rem] p-6">
+          <p className="text-sm text-fg-muted">{t.studio.wizardServerDesc}</p>
           <Input value={serverName} onChange={(e) => setServerName(e.target.value)} placeholder={t.studio.serverName} />
           <Input value={serverGame} onChange={(e) => setServerGame(e.target.value)} placeholder={t.studio.gameSlug} />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Input value={host} onChange={(e) => setHost(e.target.value)} placeholder={t.studio.host} />
             <Input value={port} onChange={(e) => setPort(e.target.value)} placeholder={t.studio.port} />
           </div>

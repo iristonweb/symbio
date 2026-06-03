@@ -14,13 +14,22 @@ export function getToken(): string | null {
   return localStorage.getItem("token");
 }
 
+const TOKEN_COOKIE = "symbio_token";
+const TOKEN_MAX_AGE = 60 * 60 * 24 * 14;
+
 export function setToken(token: string) {
   localStorage.setItem("token", token);
+  if (typeof document !== "undefined") {
+    document.cookie = `${TOKEN_COOKIE}=${encodeURIComponent(token)}; path=/; max-age=${TOKEN_MAX_AGE}; SameSite=Lax`;
+  }
 }
 
 export function clearToken() {
   localStorage.removeItem("token");
   localStorage.removeItem("symbio_user");
+  if (typeof document !== "undefined") {
+    document.cookie = `${TOKEN_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
+  }
 }
 
 export function cacheUser(user: AuthUser) {
@@ -44,4 +53,12 @@ export function hasRole(user: AuthUser | null, role: string): boolean {
 
 export function hasCapability(user: AuthUser | null, cap: string): boolean {
   return Boolean(user?.capabilities?.includes(cap));
+}
+
+const PROTECTED_PREFIXES = ["/admin", "/studio", "/profile", "/billing", "/marketplace/library"];
+
+export function requiresAuthRedirect(pathname: string): boolean {
+  return PROTECTED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
 }
