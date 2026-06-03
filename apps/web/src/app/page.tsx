@@ -8,29 +8,49 @@ import {
   activityFeed,
   seasonEvents,
   heroFilterIds,
-  serverMatchesHeroFilter,
-  totalOnline,
   type HeroFilterId,
 } from "@/lib/ecosystem";
 import { HeroSceneDynamic } from "@/components/immersive/HeroSceneDynamic";
-import { OrganismPanel, MetricCapsule, PulseOrb } from "@/components/immersive/OrganismPanel";
+import { MetricCapsule } from "@/components/immersive/OrganismPanel";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
 import { Input } from "@/components/ui/Input";
+import { EcosystemRadarPanel } from "@/components/immersive/EcosystemRadar";
 import { useLocale } from "@/components/LocaleProvider";
+import { useUiMode } from "@/components/UiModeProvider";
+import { platformApi, type EcosystemRadar } from "@/lib/platform-api";
+
+type HomeServer = {
+  id: string;
+  name: string;
+  game: string;
+  region?: string | null;
+  mode?: string | null;
+  online: number;
+  maxPlayers: number;
+  status: string;
+  href: string;
+};
 
 export default function HomePage() {
   const { t } = useLocale();
+  const { mode } = useUiMode();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
   const [query, setQuery] = React.useState("");
   const [selectedFilter, setSelectedFilter] = React.useState<HeroFilterId>("all");
   const [apiOnline, setApiOnline] = React.useState(false);
+  const [radarData, setRadarData] = React.useState<EcosystemRadar | null>(null);
 
   React.useEffect(() => {
     let mounted = true;
     fetch(`${apiUrl}/health`, { cache: "no-store" })
       .then((r) => mounted && setApiOnline(r.ok))
       .catch(() => mounted && setApiOnline(false));
+    platformApi
+      .ecosystemRadar()
+      .then((data) => mounted && setRadarData(data))
+      .catch(() => mounted && setRadarData(null));
     return () => {
       mounted = false;
     };
@@ -46,15 +66,41 @@ export default function HomePage() {
     roleplay: t.home.filterRoleplay,
   };
 
-  const filtered = ecosystemServers.filter((server) => {
-    const haystack = `${server.name} ${server.game} ${server.region} ${server.mood} ${server.playstyle.join(" ")}`.toLowerCase();
+  const fallbackServers: HomeServer[] = ecosystemServers.map((server) => ({
+    id: server.id,
+    name: server.name,
+    game: server.game,
+    region: server.region,
+    mode: server.mood,
+    online: server.online,
+    maxPlayers: server.maxPlayers,
+    status: "fallback",
+    href: `/servers?${new URLSearchParams({ q: server.name }).toString()}`,
+  }));
+
+  const liveServers: HomeServer[] =
+    radarData?.servers.map((server) => ({
+      id: server.id,
+      name: server.name,
+      game: server.game,
+      region: server.region,
+      mode: server.mode,
+      online: server.online,
+      maxPlayers: server.max_players,
+      status: server.status,
+      href: server.href,
+    })) ?? [];
+
+  const sourceServers = liveServers.length > 0 ? liveServers : fallbackServers;
+  const filtered = sourceServers.filter((server) => {
+    const haystack = `${server.name} ${server.game} ${server.region ?? ""} ${server.mode ?? ""}`.toLowerCase();
     const matchesQuery = haystack.includes(query.toLowerCase().trim());
-    const matchesFilter = serverMatchesHeroFilter(server, selectedFilter);
+    const matchesFilter = selectedFilter === "all" || haystack.includes(selectedFilter);
     return matchesQuery && matchesFilter;
   });
 
-  const heroPreview = (filtered.length > 0 ? filtered : ecosystemServers).slice(0, 2);
-  const onlineTotal = totalOnline();
+  const heroPreview = (filtered.length > 0 ? filtered : sourceServers).slice(0, 2);
+  const onlineTotal = radarData?.stats.servers_online ?? sourceServers.reduce((sum, server) => sum + server.online, 0);
   const searchHref =
     query.trim() || selectedFilter !== "all"
       ? `/servers?${new URLSearchParams({
@@ -107,18 +153,9 @@ export default function HomePage() {
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {heroFilterIds.map((id) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setSelectedFilter(id)}
-                    className={
-                      selectedFilter === id
-                        ? "rounded-full border border-primary/50 bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary"
-                        : "rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-fg-muted transition hover:border-white/20 hover:bg-white/10"
-                    }
-                  >
+                  <Chip key={id} active={selectedFilter === id} onClick={() => setSelectedFilter(id)}>
                     {filterLabels[id]}
-                  </button>
+                  </Chip>
                 ))}
               </div>
             </div>
@@ -144,17 +181,19 @@ export default function HomePage() {
               {heroPreview.map((server) => (
                 <Link
                   key={server.id}
-                  href={`/servers/${server.id}`}
+                  href={server.href}
                   className="organism-panel group rounded-[1.5rem] p-4 transition hover:border-white/20"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="truncate text-sm font-semibold">{server.name}</div>
                       <div className="mt-1 truncate text-[11px] uppercase tracking-[0.18em] text-fg-muted">
-                        {server.game} · {server.mood}
+                        {server.game} · {server.mode ?? server.region ?? "live"}
                       </div>
                     </div>
-                    <PulseOrb value={server.pulse} accent={server.accent} size="sm" />
+                    <span className="rounded-full border border-primary/25 bg-primary/10 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-primary">
+                      {server.status}
+                    </span>
                   </div>
                   <div className="mt-3 text-xs text-fg-muted">
                     {server.online}/{server.maxPlayers} {t.common.players}
@@ -166,41 +205,62 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="holo-panel relative overflow-hidden rounded-[2rem] p-6">
-          <div className="absolute inset-0 ecosystem-grid opacity-60" />
-          <div className="relative">
-            <Badge tone="info">{t.home.radarBadge}</Badge>
-            <h2 className="font-display mt-4 text-3xl font-semibold tracking-tight">{t.home.radarTitle}</h2>
-            <p className="mt-3 text-sm leading-7 text-fg-muted">{t.home.radarDesc}</p>
-            <div className="relative mx-auto mt-8 aspect-square max-w-[440px] rounded-full border border-primary/20 bg-black/30">
-              <div className="absolute inset-8 rounded-full border border-white/10" />
-              <div className="absolute inset-20 rounded-full border border-white/10" />
-              <div className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary shadow-[0_0_28px_rgb(var(--primary))]" />
-              {ecosystemServers.map((server, index) => {
-                const coords = [
-                  "left-[18%] top-[22%]",
-                  "right-[18%] top-[30%]",
-                  "left-[28%] bottom-[18%]",
-                  "right-[27%] bottom-[22%]",
-                ][index];
-                return (
-                  <Link
-                    key={server.id}
-                    href={`/servers/${server.id}`}
-                    className={`absolute ${coords} group`}
-                  >
-                    <span className="absolute inset-0 h-8 w-8 animate-ping rounded-full bg-primary/20" />
-                    <span className="relative block h-8 w-8 rounded-full border border-white/20 bg-black/70 shadow-[0_0_22px_rgb(var(--primary)_/_0.45)]" />
-                    <span className="absolute left-9 top-1 hidden whitespace-nowrap rounded-full border border-white/10 bg-black/70 px-3 py-1 text-xs text-fg group-hover:block">
-                      {server.name}
-                    </span>
-                  </Link>
-                );
-              })}
+      {mode === "expert" ? (
+        <section className="holo-panel rounded-[2rem] p-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <Badge tone="warning">expert telemetry</Badge>
+              <h2 className="font-display mt-3 text-3xl font-semibold tracking-tight">Live ecosystem snapshot</h2>
             </div>
+            <Link href="/servers?sort=online" className="text-sm text-primary hover:text-fg">
+              Open full server matrix →
+            </Link>
           </div>
-        </div>
+          <div className="mt-6 overflow-x-auto">
+            <table className="w-full min-w-[720px] text-left text-sm">
+              <thead className="text-xs uppercase tracking-[0.18em] text-fg-muted">
+                <tr>
+                  <th className="py-3">World</th>
+                  <th className="py-3">Game</th>
+                  <th className="py-3">Mode</th>
+                  <th className="py-3">Region</th>
+                  <th className="py-3 text-right">Online</th>
+                  <th className="py-3 text-right">Load</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {sourceServers.slice(0, 8).map((server) => {
+                  const load = server.maxPlayers > 0 ? Math.round((server.online / server.maxPlayers) * 100) : 0;
+                  return (
+                    <tr key={server.id} className="text-fg-muted">
+                      <td className="py-3">
+                        <Link href={server.href} className="font-medium text-fg hover:text-primary">
+                          {server.name}
+                        </Link>
+                      </td>
+                      <td className="py-3">{server.game}</td>
+                      <td className="py-3">{server.mode ?? "—"}</td>
+                      <td className="py-3">{server.region ?? "global"}</td>
+                      <td className="py-3 text-right">{server.online}/{server.maxPlayers}</td>
+                      <td className="py-3 text-right">{load}%</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
+
+      <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <EcosystemRadarPanel
+          fallbackServers={ecosystemServers.map((s) => ({
+            id: s.id,
+            name: s.name,
+            game: s.game,
+            href: `/servers?${new URLSearchParams({ q: s.name }).toString()}`,
+          }))}
+        />
 
         <div>
           <div className="mb-5 flex items-end justify-between gap-4">
@@ -213,8 +273,28 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid gap-4">
-            {filtered.slice(0, 2).map((server, index) => (
-              <OrganismPanel key={server.id} server={server} index={index} compact />
+            {(filtered.length > 0 ? filtered : sourceServers).slice(0, 2).map((server) => (
+              <Link key={server.id} href={server.href} className="organism-panel rounded-[2rem] p-5 transition hover:border-primary/30">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <Badge tone={server.status === "online" ? "success" : "info"}>{server.game}</Badge>
+                    <h3 className="mt-3 text-xl font-semibold">{server.name}</h3>
+                    <p className="mt-1 text-sm text-fg-muted">
+                      {server.region ?? "global"} · {server.mode ?? "ecosystem"}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-semibold text-gradient">{server.online}</div>
+                    <div className="text-[11px] text-fg-muted">online</div>
+                  </div>
+                </div>
+                <div className="mt-4 h-2 rounded-full bg-white/8">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+                    style={{ width: `${server.maxPlayers > 0 ? Math.min(100, Math.round((server.online / server.maxPlayers) * 100)) : 0}%` }}
+                  />
+                </div>
+              </Link>
             ))}
           </div>
         </div>

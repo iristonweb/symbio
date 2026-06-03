@@ -14,9 +14,12 @@ class Plan(Base):
     slug: Mapped[str] = mapped_column(String(80), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    audience: Mapped[str] = mapped_column(String(40), nullable=False, default="site_owner")
     price_monthly: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     credits_monthly: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    commission_percent: Mapped[float | None] = mapped_column(Float, nullable=True)
     features: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     is_active: Mapped[bool] = mapped_column(default=True)
 
 

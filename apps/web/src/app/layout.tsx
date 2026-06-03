@@ -4,6 +4,7 @@ import { Inter, Onest } from "next/font/google";
 import { Shell } from "@/components/Shell";
 import { UiModeProvider } from "@/components/UiModeProvider";
 import { LocaleProvider } from "@/components/LocaleProvider";
+import { AuthProvider } from "@/components/AuthProvider";
 
 const fontBody = Inter({
   subsets: ["latin", "cyrillic"],
@@ -37,9 +38,11 @@ export default function RootLayout({
     <html lang="ru" className={`dark ${fontBody.variable} ${fontDisplay.variable}`} suppressHydrationWarning>
       <body className="antialiased">
         <LocaleProvider>
-          <UiModeProvider>
-            <Shell>{children}</Shell>
-          </UiModeProvider>
+          <AuthProvider>
+            <UiModeProvider>
+              <Shell>{children}</Shell>
+            </UiModeProvider>
+          </AuthProvider>
         </LocaleProvider>
       </body>
     </html>

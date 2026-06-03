@@ -79,9 +79,48 @@ export type ApiPlan = {
   slug: string;
   name: string;
   description?: string | null;
+  audience?: string;
   price_monthly: number;
   credits_monthly: number;
+  commission_percent?: number | null;
   features: string[];
+};
+
+export type ApiMarketplaceProduct = {
+  id: string;
+  slug: string;
+  title: string;
+  short_description?: string | null;
+  description?: string | null;
+  product_type: string;
+  game_slug?: string | null;
+  price_rub: number;
+  is_free: boolean;
+  cover_url?: string | null;
+  tags: string[];
+  moderation_status?: string;
+  sales_count: number;
+  rating_avg: number;
+  rating_count: number;
+  creator_id: string;
+};
+
+export type EcosystemRadar = {
+  servers: {
+    id: string;
+    name: string;
+    game: string;
+    region?: string | null;
+    mode?: string | null;
+    online: number;
+    max_players: number;
+    status: string;
+    href: string;
+  }[];
+  games: { slug: string; title: string; href: string }[];
+  projects: { slug: string; name: string; href: string }[];
+  products: { slug: string; title: string; price_rub: number; href: string }[];
+  stats: { servers_online: number; server_count: number; game_count: number; product_count: number };
 };
 
 function authHeaders(): HeadersInit {
@@ -118,11 +157,12 @@ export const platformApi = {
     return fetchApi<{ items: ApiProject[]; total: number }>(`/projects?${q}`);
   },
   project: (slug: string) => fetchApi<ApiProject>(`/projects/${slug}`),
-  servers: (params?: { game?: string; sort?: string; q?: string }) => {
+  servers: (params?: { game?: string; sort?: string; q?: string; style?: string }) => {
     const q = new URLSearchParams();
     if (params?.game) q.set("game", params.game);
     if (params?.sort) q.set("sort", params.sort ?? "online");
     if (params?.q) q.set("q", params.q);
+    if (params?.style) q.set("style", params.style);
     return fetchApi<{ items: ApiServer[] }>(`/servers?${q}`);
   },
   server: (id: string) => fetchApi<ApiServer>(`/servers/${id}`),
@@ -130,8 +170,20 @@ export const platformApi = {
     fetchApi<{ items: ApiArticle[] }>(`/articles${type ? `?type=${type}` : ""}`),
   article: (slug: string) => fetchApi<ApiArticle>(`/articles/${slug}`),
   contests: () => fetchApi<{ items: { id: string; slug: string; title: string; prize_summary?: string }[] }>(`/contests`),
-  plans: () => fetchApi<{ items: ApiPlan[] }>(`/billing/plans`),
+  plans: (audience?: string) =>
+    fetchApi<{ items: ApiPlan[] }>(`/billing/plans${audience ? `?audience=${audience}` : ""}`),
   wallet: () => fetchApi<{ balance_credits: number; transactions: { amount: number; tx_type: string; description?: string; created_at: string }[] }>(`/billing/wallet`),
+  ecosystemRadar: () => fetchApi<EcosystemRadar>("/ecosystem/radar"),
+  marketplaceProducts: (params?: { q?: string; game?: string; type?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.q) q.set("q", params.q);
+    if (params?.game) q.set("game", params.game);
+    if (params?.type) q.set("type", params.type);
+    return fetchApi<{ items: ApiMarketplaceProduct[]; total: number }>(`/marketplace/products?${q}`);
+  },
+  marketplaceProduct: (slug: string) => fetchApi<ApiMarketplaceProduct>(`/marketplace/products/${slug}`),
+  cart: () => fetchApi<{ items: ApiMarketplaceProduct[]; total_rub: number }>("/marketplace/cart"),
+  library: () => fetchApi<{ items: (ApiMarketplaceProduct & { granted_at?: string })[] }>("/marketplace/library"),
   search: (q: string, index = "servers") =>
     fetchApi<{ hits: { id: string; name?: string; title?: string }[] }>(`/search?q=${encodeURIComponent(q)}&index=${index}`),
 };

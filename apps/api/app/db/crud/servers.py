@@ -2,7 +2,7 @@ import re
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_, cast, String
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.server import Server
@@ -62,6 +62,7 @@ async def list_servers(
     sort: str = "online",
     fresh_minutes: int = 60,
     q: str | None = None,
+    style: str | None = None,
     limit: int = 50,
     offset: int = 0,
 ):
@@ -80,7 +81,26 @@ async def list_servers(
     if project_id:
         q_stmt = q_stmt.where(Server.project_id == project_id)
     if q:
-        q_stmt = q_stmt.where(Server.name.ilike(f"%{q}%"))
+        like = f"%{q}%"
+        q_stmt = q_stmt.where(
+            or_(
+                Server.name.ilike(like),
+                Server.game.ilike(like),
+                Server.region.ilike(like),
+                Server.mode.ilike(like),
+                Server.description.ilike(like),
+                cast(Server.tags, String).ilike(like),
+            )
+        )
+    if style and style != "all":
+        like = f"%{style}%"
+        q_stmt = q_stmt.where(
+            or_(
+                Server.mode.ilike(like),
+                Server.description.ilike(like),
+                cast(Server.tags, String).ilike(like),
+            )
+        )
     if fresh_minutes > 0:
         cutoff = datetime.now(timezone.utc) - timedelta(minutes=fresh_minutes)
         q_stmt = q_stmt.where(ServerSnapshot.created_at >= cutoff)

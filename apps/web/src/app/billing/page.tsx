@@ -3,12 +3,22 @@
 import * as React from "react";
 import { platformApi, fetchApi, type ApiPlan } from "@/lib/platform-api";
 import { useLocale } from "@/components/LocaleProvider";
+import { useAuth } from "@/components/AuthProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
 import { Skeleton } from "@/components/ui/Skeleton";
+
+const AUDIENCES = [
+  { id: "user", label: "Игроки" },
+  { id: "site_owner", label: "Владельцы серверов" },
+  { id: "creator", label: "Модеры / Creators" },
+] as const;
 
 export default function BillingPage() {
   const { t } = useLocale();
+  const { user } = useAuth();
+  const [audience, setAudience] = React.useState<(typeof AUDIENCES)[number]["id"]>("user");
   const [plans, setPlans] = React.useState<ApiPlan[]>([]);
   const [balance, setBalance] = React.useState<number | null>(null);
   const [txs, setTxs] = React.useState<{ amount: number; tx_type: string; description?: string; created_at: string }[]>([]);
@@ -18,18 +28,18 @@ export default function BillingPage() {
   React.useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     Promise.all([
-      platformApi.plans(),
+      platformApi.plans(audience),
       token ? platformApi.wallet().catch(() => null) : Promise.resolve(null),
     ])
       .then(([p, w]) => {
-        setPlans(p.items);
+        setPlans(p.items.filter((pl) => !pl.slug.includes("legacy")));
         if (w) {
           setBalance(w.balance_credits);
           setTxs(w.transactions);
         }
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [audience]);
 
   const checkout = async (planSlug: string) => {
     setMsg(null);
@@ -54,6 +64,15 @@ export default function BillingPage() {
         <h1 className="mt-4 text-4xl font-semibold">
           {t.billing.title} <span className="text-gradient">{t.billing.titleAccent}</span>
         </h1>
+        <p className="mt-3 text-fg-muted">
+          Тарифы в RUB для игроков, владельцев серверов и creators. Подписки управляют лимитами,
+          промо-кредитами, комиссией и доступом к growth-инструментам.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-2 text-xs text-fg-muted">
+          <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1">Защищённая лицензия</span>
+          <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1">RUB invoices</span>
+          <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1">Creator revenue share</span>
+        </div>
         {balance !== null ? (
           <p className="mt-4 text-lg">
             {t.billing.balance}: <strong>{balance}</strong> {t.billing.credits}
@@ -62,6 +81,14 @@ export default function BillingPage() {
           <p className="mt-4 text-fg-muted">{t.billing.signInWallet}</p>
         )}
       </section>
+
+      <div className="flex flex-wrap gap-2">
+        {AUDIENCES.map((a) => (
+          <Chip key={a.id} active={audience === a.id} onClick={() => setAudience(a.id)}>
+            {a.label}
+          </Chip>
+        ))}
+      </div>
 
       {msg ? <p className="text-sm text-primary">{msg}</p> : null}
 
@@ -74,18 +101,60 @@ export default function BillingPage() {
               <h2 className="text-xl font-semibold">{plan.name}</h2>
               <p className="mt-2 text-sm text-fg-muted">{plan.description}</p>
               <p className="mt-4 text-3xl font-semibold text-gradient">
-                {plan.price_monthly === 0 ? t.billing.free : `${plan.price_monthly} ${t.billing.perMonth}`}
+                {plan.price_monthly === 0 ? t.billing.free : `${plan.price_monthly} ₽${t.billing.perMonth}`}
               </p>
               <p className="text-xs text-fg-muted">
                 {plan.credits_monthly} {t.billing.credits}
+                {plan.commission_percent != null ? ` · комиссия ${plan.commission_percent}%` : ""}
               </p>
-              <Button className="mt-6 w-full" size="sm" onClick={() => checkout(plan.slug)}>
+              <ul className="mt-3 space-y-1 text-xs text-fg-muted">
+                {plan.features.slice(0, 5).map((f) => (
+                  <li key={f}>· {f}</li>
+                ))}
+              </ul>
+              <Button
+                className="mt-6 w-full"
+                size="sm"
+                variant={plan.price_monthly > 0 ? "premium" : "secondary"}
+                onClick={() => checkout(plan.slug)}
+                disabled={!user}
+              >
                 {plan.price_monthly === 0 ? t.billing.activate : t.billing.subscribe}
               </Button>
             </div>
           ))}
         </div>
       )}
+
+      {!loading && plans.length > 0 ? (
+        <section className="holo-panel rounded-[2rem] p-6">
+          <h2 className="text-2xl font-semibold">Сравнение возможностей</h2>
+          <div className="mt-5 overflow-x-auto">
+            <table className="w-full min-w-[720px] text-left text-sm">
+              <thead className="text-xs uppercase tracking-[0.18em] text-fg-muted">
+                <tr>
+                  <th className="py-3">План</th>
+                  <th className="py-3 text-right">Цена</th>
+                  <th className="py-3 text-right">Кредиты</th>
+                  <th className="py-3 text-right">Комиссия</th>
+                  <th className="py-3">Ключевые фичи</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {plans.map((plan) => (
+                  <tr key={plan.id}>
+                    <td className="py-3 font-medium">{plan.name}</td>
+                    <td className="py-3 text-right">{plan.price_monthly === 0 ? "0 ₽" : `${plan.price_monthly} ₽/мес`}</td>
+                    <td className="py-3 text-right">{plan.credits_monthly}</td>
+                    <td className="py-3 text-right">{plan.commission_percent != null ? `${plan.commission_percent}%` : "—"}</td>
+                    <td className="py-3 text-fg-muted">{plan.features.slice(0, 4).join(", ")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
 
       {txs.length > 0 ? (
         <section>

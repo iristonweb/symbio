@@ -76,9 +76,24 @@ Open:
 - Servers: `http://localhost:3000/servers`
 - Admin/Audit: `http://localhost:3000/admin/audit` (paste admin token)
 
+## Launch features (Sprint 1+)
+- Extended auth: email verification, Google/Steam OAuth (dev mode without keys), SYMBIO nickname generation
+- Roles: `user`, `creator`, `site_owner`, `moderator`, `admin` with capability-based UI
+- Marketplace: products, cart, checkout (mock), library, moderation API
+- Billing: audience-specific plans (user / site_owner / creator) in RUB, payment provider adapter (mock → YooKassa/CloudPayments)
+- Ecosystem radar: live API `/ecosystem/radar` on home page
+- Alembic scaffold in `apps/api/alembic/` (fresh DB: `python -m app.db.init_db`)
+
+### New API routes
+- `GET /auth/me`, `PATCH /auth/me`, email verify, Google/Steam OAuth
+- `GET /marketplace/products`, cart, checkout, library
+- `GET /ecosystem/radar`
+- `GET /billing/plans?audience=user|site_owner|creator`
+- `GET /admin/users`, `PATCH /admin/users/{id}/roles`
+
 ## Notes
-- This is **Sprint 0**: scaffold + core plumbing (auth/rbac/audit/events/storage/servers).
-- Sprint 1 will add Marketplace listing/product/cart/checkout/library + search/filters.
+- For schema changes on an existing DB, recreate Postgres volume or run migrations after backup.
+- Payment keys: set `YUKASSA_*` or `CLOUDPAYMENTS_*` and `PAYMENT_PROVIDER` when going live.
 
 
 ## Security note (Next.js)

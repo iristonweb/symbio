@@ -14,8 +14,12 @@ from app.api.routes import (
     articles,
     contests,
     billing,
+    billing_webhooks,
     search,
     imports,
+    marketplace,
+    admin_users,
+    ecosystem,
 )
 
 app = FastAPI(title="SYMBIO API", version="0.2.0")
@@ -37,8 +41,12 @@ app.include_router(servers.router, prefix="/servers", tags=["servers"])
 app.include_router(articles.router, prefix="/articles", tags=["articles"])
 app.include_router(contests.router, prefix="/contests", tags=["contests"])
 app.include_router(billing.router, prefix="/billing", tags=["billing"])
+app.include_router(billing_webhooks.router, prefix="/billing", tags=["billing-webhooks"])
+app.include_router(marketplace.router, prefix="/marketplace", tags=["marketplace"])
+app.include_router(ecosystem.router, prefix="/ecosystem", tags=["ecosystem"])
 app.include_router(search.router, prefix="/search", tags=["search"])
 app.include_router(imports.router, prefix="/admin/imports", tags=["admin-imports"])
+app.include_router(admin_users.router, prefix="/admin", tags=["admin-users"])
 app.include_router(audit.router, prefix="/admin", tags=["admin"])
 app.include_router(events.router, prefix="/events", tags=["events"])
 app.include_router(storage.router, prefix="/storage", tags=["storage"])

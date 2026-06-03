@@ -8,6 +8,7 @@ from app.db.models.project import Project
 from app.db.models.server import Server
 from app.db.models.snapshot import ServerSnapshot
 from app.db.models.article import Article
+from app.db.models.marketplace import MarketplaceProduct
 from app.services.search import ensure_indexes, index_documents
 
 
@@ -43,5 +44,26 @@ async def reindex_all(db: AsyncSession) -> dict:
     docs = [{"id": str(a.id), "slug": a.slug, "title": a.title, "article_type": a.article_type} for a in articles]
     await index_documents("articles", docs)
     counts["articles"] = len(docs)
+
+    products = (
+        await db.execute(select(MarketplaceProduct).where(MarketplaceProduct.moderation_status == "approved"))
+    ).scalars().all()
+    docs = [
+        {
+            "id": str(p.id),
+            "slug": p.slug,
+            "title": p.title,
+            "description": p.short_description,
+            "product_type": p.product_type,
+            "game_slug": p.game_slug,
+            "tags": p.tags,
+            "price_rub": p.price_rub,
+            "sales_count": p.sales_count,
+            "rating_avg": p.rating_avg,
+        }
+        for p in products
+    ]
+    await index_documents("marketplace_products", docs)
+    counts["marketplace_products"] = len(docs)
 
     return counts

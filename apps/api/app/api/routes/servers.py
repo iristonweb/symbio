@@ -18,6 +18,7 @@ async def list_servers_route(
     sort: str = Query(default="online", pattern="^(online|rating|votes|rank|new|top_online)$"),
     fresh_minutes: int = Query(default=60, ge=0, le=180),
     q: str | None = Query(default=None),
+    style: str | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     db: AsyncSession = Depends(get_db),
@@ -32,6 +33,7 @@ async def list_servers_route(
         sort=sort,
         fresh_minutes=fresh_minutes,
         q=q,
+        style=style,
         limit=limit,
         offset=offset,
     )

@@ -5,7 +5,7 @@ import httpx
 
 from app.core.config import settings
 
-INDEXES = ["games", "projects", "servers", "articles"]
+INDEXES = ["games", "projects", "servers", "articles", "marketplace_products"]
 
 
 def _headers() -> dict:

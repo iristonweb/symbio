@@ -8,6 +8,8 @@ import { cn } from "@/lib/cn";
 import { ModeSwitch } from "@/components/ModeSwitch";
 import { LangSwitch } from "@/components/LangSwitch";
 import { useLocale } from "@/components/LocaleProvider";
+import { useAuth } from "@/components/AuthProvider";
+import { hasRole } from "@/lib/auth";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Kbd } from "@/components/ui/Kbd";
@@ -62,31 +64,42 @@ function Brand() {
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const { t } = useLocale();
+  const { user, logout, loading } = useAuth();
   const [api, setApi] = React.useState<"unknown" | "up" | "down">("unknown");
   const [scrolled, setScrolled] = React.useState(false);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-  const NAV = [
+  const NAV_PUBLIC = [
     { href: "/", label: t.nav.home },
     { href: "/games", label: t.nav.games },
     { href: "/servers", label: t.nav.servers },
+    { href: "/marketplace", label: t.nav.marketplace ?? "Маркет" },
     { href: "/projects", label: t.nav.projects },
     { href: "/news", label: t.nav.news },
-    { href: "/contests", label: t.nav.contests },
-    { href: "/studio", label: t.nav.studio },
     { href: "/billing", label: t.nav.billing },
   ];
 
+  const nav = [...NAV_PUBLIC];
+  if (user && (hasRole(user, "creator") || hasRole(user, "site_owner"))) {
+    nav.push({ href: "/studio", label: t.nav.studio });
+  }
+  if (user) {
+    nav.push({ href: "/profile", label: t.nav.profile ?? "Профиль" });
+  }
+  if (user && hasRole(user, "admin")) {
+    nav.push({ href: "/admin/dashboard", label: "Admin" });
+  }
+
   React.useEffect(() => {
     let mounted = true;
-    const url = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    fetch(`${url}/health`, { cache: "no-store" })
+    fetch(`${apiUrl}/health`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then(() => mounted && setApi("up"))
       .catch(() => mounted && setApi("down"));
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [apiUrl]);
 
   React.useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -97,6 +110,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   const apiLabel =
     api === "up" ? t.api.online : api === "down" ? t.api.offline : t.api.unknown;
+
+  const startOAuth = async (provider: "google" | "steam") => {
+    const r = await fetch(`${apiUrl}/auth/${provider}/start`);
+    const data = await r.json();
+    window.location.href = data.url;
+  };
 
   return (
     <div className="relative min-h-screen">
@@ -120,7 +139,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </Link>
 
           <nav className="hidden items-center gap-0.5 rounded-full border border-white/10 bg-black/30 p-1.5 backdrop-blur-xl lg:flex">
-            {NAV.map((n) => (
+            {nav.map((n) => (
               <NavLink key={n.href} href={n.href} label={n.label} />
             ))}
           </nav>
@@ -131,62 +150,70 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </div>
             <LangSwitch />
 
+            <Badge
+              tone={api === "up" ? "success" : api === "down" ? "danger" : "neutral"}
+              className="hidden sm:inline-flex"
+            >
+              {apiLabel}
+            </Badge>
+
             <button
               type="button"
-              className="hidden items-center gap-1.5 rounded-full border border-white/10 bg-black/30 px-2.5 py-2 text-xs text-fg-muted transition hover:bg-white/10 sm:inline-flex"
+              className="hidden items-center gap-1.5 rounded-full border border-white/10 bg-black/30 px-2.5 py-2 text-xs text-fg-muted transition hover:bg-white/10 md:inline-flex"
               onClick={() => {
-                window.dispatchEvent(
-                  new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true })
-                );
+                window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true }));
               }}
             >
               <Kbd>Ctrl</Kbd>
               <Kbd>K</Kbd>
             </button>
 
-            <Badge
-              tone={api === "up" ? "success" : api === "down" ? "danger" : "neutral"}
-              className="hidden sm:inline-flex"
-            >
-              <span className="relative flex h-2 w-2">
-                {api === "up" ? (
-                  <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-accent opacity-75" />
-                ) : null}
-                <span
-                  className={cn(
-                    "relative inline-flex h-2 w-2 rounded-full",
-                    api === "up"
-                      ? "bg-accent"
-                      : api === "down"
-                      ? "bg-[rgba(255,80,110,0.95)]"
-                      : "bg-white/40"
-                  )}
-                />
-              </span>
-              {apiLabel}
-            </Badge>
-
-            <Link href="/auth/login">
-              <Button size="sm" variant="secondary">
-                {t.nav.signIn}
-              </Button>
-            </Link>
+            {!loading && user ? (
+              <div className="flex items-center gap-2">
+                <Link href="/profile" className="hidden text-sm text-fg-muted hover:text-fg sm:block">
+                  @{user.nickname}
+                </Link>
+                <Button size="sm" variant="ghost" onClick={logout}>
+                  {t.nav.signOut}
+                </Button>
+              </div>
+            ) : (
+              <Link href="/auth/login">
+                <Button size="sm" variant="premium">
+                  {t.nav.signIn}
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
         <div className="border-t border-white/8 lg:hidden">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 overflow-x-auto px-4 py-2">
-            <div className="flex items-center gap-0.5">
-              {NAV.map((n) => (
-                <NavLink key={n.href} href={n.href} label={n.label} />
-              ))}
-            </div>
-            <ModeSwitch />
+          <div className="mx-auto flex max-w-7xl items-center gap-2 overflow-x-auto px-4 py-2">
+            {nav.map((n) => (
+              <NavLink key={n.href} href={n.href} label={n.label} />
+            ))}
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:py-12">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-8 pb-28 sm:py-12 lg:pb-12">{children}</main>
+
+      <nav className="fixed bottom-3 left-1/2 z-50 grid w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 grid-cols-4 gap-1 rounded-[1.5rem] border border-white/10 bg-[rgba(3,5,13,0.88)] p-1.5 shadow-glass backdrop-blur-2xl lg:hidden">
+        {[
+          { href: "/servers", label: "Worlds" },
+          { href: "/marketplace", label: "Market" },
+          { href: user ? "/profile" : "/auth/login", label: "Me" },
+          { href: "/studio", label: "Studio" },
+        ].map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="rounded-2xl px-2 py-2 text-center text-[11px] font-medium text-fg-muted transition hover:bg-white/10 hover:text-fg"
+          >
+            {item.label}
+          </Link>
+        ))}
+      </nav>
 
       <footer className="border-t border-white/10 py-12">
         <div className="mx-auto max-w-7xl px-4">
@@ -196,11 +223,22 @@ export function Shell({ children }: { children: React.ReactNode }) {
               {t.footer.tagline}
             </div>
             <div className="flex flex-wrap gap-4 text-sm text-fg-muted">
-              <Link href="/games" className="hover:text-fg">{t.nav.games}</Link>
-              <Link href="/projects" className="hover:text-fg">{t.nav.projects}</Link>
-              <Link href="/guides" className="hover:text-fg">{t.nav.guides}</Link>
-              <Link href="/promocodes" className="hover:text-fg">{t.nav.promocodes}</Link>
-              <Link href="/admin/imports" className="hover:text-fg">{t.nav.adminImport}</Link>
+              <Link href="/marketplace" className="hover:text-fg">
+                {t.nav.marketplace ?? "Маркет"}
+              </Link>
+              <Link href="/games" className="hover:text-fg">
+                {t.nav.games}
+              </Link>
+              {!user ? (
+                <>
+                  <button type="button" className="hover:text-fg" onClick={() => startOAuth("google")}>
+                    Google
+                  </button>
+                  <button type="button" className="hover:text-fg" onClick={() => startOAuth("steam")}>
+                    Steam
+                  </button>
+                </>
+              ) : null}
             </div>
           </div>
         </div>

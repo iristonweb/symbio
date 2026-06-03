@@ -5,12 +5,14 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { useLocale } from "@/components/LocaleProvider";
+import { platformApi } from "@/lib/platform-api";
 
 type Action = {
   label: string;
   hint?: string;
   kbd?: string;
   href: string;
+  kind?: string;
 };
 
 export function CommandPalette() {
@@ -18,6 +20,8 @@ export function CommandPalette() {
   const { t } = useLocale();
   const [open, setOpen] = React.useState(false);
   const [q, setQ] = React.useState("");
+  const [results, setResults] = React.useState<Action[]>([]);
+  const [searching, setSearching] = React.useState(false);
   const dialogRef = React.useRef<HTMLDivElement | null>(null);
 
   const ACTIONS: Action[] = React.useMemo(
@@ -48,14 +52,111 @@ export function CommandPalette() {
     if (!open) setQ("");
   }, [open]);
 
+  React.useEffect(() => {
+    const query = q.trim();
+    if (!open || query.length < 2) {
+      setResults([]);
+      setSearching(false);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      setSearching(true);
+      Promise.allSettled([
+        platformApi.servers({ q: query, sort: "online" }),
+        platformApi.games({ q: query }),
+        platformApi.projects({ sort: "rating" }),
+        platformApi.articles(),
+        platformApi.marketplaceProducts({ q: query }),
+      ])
+        .then(([servers, games, projects, articles, products]) => {
+          if (cancelled) return;
+          const next: Action[] = [];
+
+          if (servers.status === "fulfilled") {
+            next.push(
+              ...servers.value.items.slice(0, 5).map((item) => ({
+                label: item.name,
+                hint: `${item.game} · ${item.region ?? "global"} · ${item.snapshot?.online ?? 0}/${item.snapshot?.max_players ?? 0}`,
+                href: `/servers/${item.id}`,
+                kind: "server",
+              }))
+            );
+          }
+
+          if (games.status === "fulfilled") {
+            next.push(
+              ...games.value.items.slice(0, 4).map((item) => ({
+                label: item.title,
+                hint: `${item.category} · ${item.server_count} servers`,
+                href: `/games/${item.slug}`,
+                kind: "game",
+              }))
+            );
+          }
+
+          if (projects.status === "fulfilled") {
+            next.push(
+              ...projects.value.items
+                .filter((item) => `${item.name} ${item.description ?? ""}`.toLowerCase().includes(query.toLowerCase()))
+                .slice(0, 4)
+                .map((item) => ({
+                  label: item.name,
+                  hint: `${item.online_total}/${item.max_players_total} online`,
+                  href: `/projects/${item.slug}`,
+                  kind: "project",
+                }))
+            );
+          }
+
+          if (articles.status === "fulfilled") {
+            next.push(
+              ...articles.value.items
+                .filter((item) => `${item.title} ${item.excerpt ?? ""}`.toLowerCase().includes(query.toLowerCase()))
+                .slice(0, 4)
+                .map((item) => ({
+                  label: item.title,
+                  hint: item.excerpt ?? item.article_type,
+                  href: `/news/${item.slug}`,
+                  kind: item.article_type,
+                }))
+            );
+          }
+
+          if (products.status === "fulfilled") {
+            next.push(
+              ...products.value.items.slice(0, 5).map((item) => ({
+                label: item.title,
+                hint: `${item.product_type} · ${item.is_free ? "free" : `${item.price_rub} ₽`} · ★ ${item.rating_avg.toFixed(1)}`,
+                href: `/marketplace/${item.slug}`,
+                kind: "market",
+              }))
+            );
+          }
+
+          setResults(next.slice(0, 12));
+        })
+        .finally(() => {
+          if (!cancelled) setSearching(false);
+        });
+    }, 180);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [open, q]);
+
   const filtered = React.useMemo(() => {
     const qq = q.trim().toLowerCase();
     if (!qq) return ACTIONS;
+    if (results.length > 0) return results;
     return ACTIONS.filter(
       (a) =>
         a.label.toLowerCase().includes(qq) || (a.hint ?? "").toLowerCase().includes(qq)
     );
-  }, [q, ACTIONS]);
+  }, [q, ACTIONS, results]);
 
   const onPick = (a: Action) => {
     setOpen(false);
@@ -106,6 +207,9 @@ export function CommandPalette() {
             />
           </div>
           <ul className="max-h-[50vh] overflow-y-auto p-2">
+            {searching ? (
+              <li className="px-4 py-3 text-sm text-fg-muted">Searching ecosystem…</li>
+            ) : null}
             {filtered.map((a) => (
               <li key={a.href}>
                 <button
@@ -114,7 +218,14 @@ export function CommandPalette() {
                   className="flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left transition hover:bg-white/8"
                 >
                   <div>
-                    <div className="text-sm font-medium text-fg">{a.label}</div>
+                    <div className="flex items-center gap-2 text-sm font-medium text-fg">
+                      {a.kind ? (
+                        <span className="rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-primary">
+                          {a.kind}
+                        </span>
+                      ) : null}
+                      {a.label}
+                    </div>
                     {a.hint ? <div className="text-xs text-fg-muted">{a.hint}</div> : null}
                   </div>
                   {a.kbd ? (
@@ -125,6 +236,9 @@ export function CommandPalette() {
                 </button>
               </li>
             ))}
+            {!searching && filtered.length === 0 ? (
+              <li className="px-4 py-3 text-sm text-fg-muted">No ecosystem signals found.</li>
+            ) : null}
           </ul>
         </div>
       </div>

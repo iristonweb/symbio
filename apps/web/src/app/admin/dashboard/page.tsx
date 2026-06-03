@@ -1,20 +1,27 @@
+"use client";
+
 import Link from "next/link";
-import { ecosystemServers } from "@/lib/ecosystem";
+import * as React from "react";
+import { fetchApi } from "@/lib/platform-api";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { MetricCapsule, PulseOrb } from "@/components/immersive/OrganismPanel";
+import { MetricCapsule } from "@/components/immersive/OrganismPanel";
 
-const funnel = [
-  ["Profile views", "42.8K", "100%"],
-  ["Join clicks", "9.4K", "21.9%"],
-  ["Votes", "3.1K", "7.2%"],
-  ["Returning players", "6.7K", "15.6%"],
-];
-
-const heat = [64, 82, 48, 91, 73, 56, 88, 39, 77, 95, 62, 84];
+type Copilot = {
+  metrics: { servers: number; online: number; avg_load: number; products: number; events: number };
+  servers: { id: string; name: string; game: string; mode?: string | null; online: number; max_players: number; load: number; rating: number; votes: number; href: string }[];
+  products: { slug: string; title: string; game?: string | null; sales: number; rating: number; href: string }[];
+  recommendations: { type: string; title: string; impact: string; action: string }[];
+};
 
 export default function AdminDashboardPage() {
-  const lead = ecosystemServers[0];
+  const [data, setData] = React.useState<Copilot | null>(null);
+
+  React.useEffect(() => {
+    fetchApi<Copilot>("/ecosystem/copilot").then(setData).catch(() => setData(null));
+  }, []);
+
+  const metrics = data?.metrics ?? { servers: 0, online: 0, avg_load: 0, products: 0, events: 0 };
 
   return (
     <div className="space-y-10 pb-14">
@@ -41,10 +48,10 @@ export default function AdminDashboardPage() {
       </section>
 
       <section className="grid gap-4 sm:grid-cols-4">
-        <MetricCapsule label="conversion" value="+18.4%" hint="profile to join" />
-        <MetricCapsule label="retention" value="71%" hint="7-day return" />
-        <MetricCapsule label="vote velocity" value="642" hint="last 24h" />
-        <MetricCapsule label="activity" value="High" hint="community pressure" />
+        <MetricCapsule label="servers" value={String(metrics.servers)} hint="tracked worlds" />
+        <MetricCapsule label="online" value={String(metrics.online)} hint="live players" />
+        <MetricCapsule label="avg load" value={`${metrics.avg_load}%`} hint="capacity pressure" />
+        <MetricCapsule label="market signals" value={String(metrics.products)} hint="top products" />
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
@@ -52,53 +59,74 @@ export default function AdminDashboardPage() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <Badge tone="success">lead organism</Badge>
-              <h2 className="mt-4 text-3xl font-semibold tracking-tight">{lead.name}</h2>
-              <p className="mt-2 text-sm text-fg-muted">{lead.mood}</p>
+              <h2 className="mt-4 text-3xl font-semibold tracking-tight">Server performance</h2>
+              <p className="mt-2 text-sm text-fg-muted">Online, load and trust signals from live data.</p>
             </div>
-            <PulseOrb value={lead.pulse} accent={lead.accent} size="lg" />
           </div>
           <div className="mt-6 space-y-3">
-            {funnel.map(([label, value, pct]) => (
-              <div key={label} className="rounded-2xl border border-white/10 bg-black/25 p-4">
+            {(data?.servers ?? []).slice(0, 5).map((server) => (
+              <Link key={server.id} href={server.href} className="block rounded-2xl border border-white/10 bg-black/25 p-4 transition hover:border-primary/30">
                 <div className="flex items-center justify-between text-sm">
-                  <span>{label}</span>
-                  <span className="text-fg-muted">{value}</span>
+                  <span>{server.name}</span>
+                  <span className="text-fg-muted">{server.online}/{server.max_players}</span>
                 </div>
                 <div className="mt-2 h-2 rounded-full bg-white/8">
-                  <div className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-lime-300" style={{ width: pct }} />
+                  <div className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-lime-300" style={{ width: `${server.load}%` }} />
                 </div>
-              </div>
+              </Link>
             ))}
+            {!data?.servers?.length ? <p className="text-sm text-fg-muted">No server data yet.</p> : null}
           </div>
         </div>
 
         <div className="holo-panel rounded-[2rem] p-6">
-          <Badge tone="warning">activity heatmap</Badge>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight">Community energy by window</h2>
-          <div className="mt-6 grid grid-cols-4 gap-3 sm:grid-cols-6">
-            {heat.map((value, index) => (
-              <div key={`${value}-${index}`} className="rounded-2xl border border-white/10 bg-black/25 p-3">
-                <div className="h-20 overflow-hidden rounded-xl bg-white/8">
-                  <div className="mt-auto h-full rounded-xl bg-gradient-to-t from-fuchsia-500 via-cyan-300 to-lime-300 opacity-85" style={{ transform: `translateY(${100 - value}%)` }} />
+          <Badge tone="warning">market momentum</Badge>
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight">Products that can grow servers</h2>
+          <div className="mt-6 space-y-3">
+            {(data?.products ?? []).slice(0, 6).map((product) => (
+              <Link key={product.slug} href={product.href} className="block rounded-2xl border border-white/10 bg-black/25 p-4 transition hover:border-violet/40">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="font-medium">{product.title}</div>
+                    <div className="text-xs text-fg-muted">{product.game ?? "any game"} · ★ {product.rating.toFixed(1)}</div>
+                  </div>
+                  <div className="text-right text-sm text-fg-muted">{product.sales} sales</div>
                 </div>
-                <div className="mt-2 text-center text-[10px] text-fg-muted">{value}%</div>
-              </div>
+              </Link>
             ))}
+            {!data?.products?.length ? <p className="text-sm text-fg-muted">No product momentum yet.</p> : null}
           </div>
         </div>
       </section>
 
       <section className="grid gap-5 lg:grid-cols-3">
-        {[
-          ["Recommended action", "Push wipe countdown CTA to the top of the profile."],
-          ["Risk signal", "Stability below 80% can reduce returning player intent."],
-          ["Growth window", "Faction surge is best promoted 12h before peak activity."],
-        ].map(([title, copy]) => (
-          <div key={title} className="holo-panel rounded-[2rem] p-6">
-            <Badge tone="info">{title}</Badge>
-            <p className="mt-4 text-sm leading-7 text-fg-muted">{copy}</p>
+        {(data?.recommendations ?? []).map((item) => (
+          <div key={item.title} className="holo-panel rounded-[2rem] p-6">
+            <Badge tone={item.impact === "high" ? "warning" : "info"}>{item.type} · {item.impact}</Badge>
+            <h3 className="mt-4 text-xl font-semibold">{item.title}</h3>
+            <p className="mt-4 text-sm leading-7 text-fg-muted">{item.action}</p>
           </div>
         ))}
+        {!data ? (
+          <div className="holo-panel rounded-[2rem] p-6 lg:col-span-3">
+            <Badge tone="info">copilot</Badge>
+            <p className="mt-4 text-sm text-fg-muted">Waiting for live ecosystem data.</p>
+          </div>
+        ) : null}
+      </section>
+
+      <section className="holo-panel rounded-[2rem] p-6">
+        <Badge tone="info">experiment queue</Badge>
+        <h2 className="mt-4 text-3xl font-semibold tracking-tight">Next growth experiments</h2>
+        <div className="mt-6 grid gap-3 md:grid-cols-3">
+          {["Hero CTA", "Mod bundle", "Wipe countdown"].map((name) => (
+            <div key={name} className="rounded-2xl border border-white/10 bg-black/25 p-4">
+              <div className="font-medium">{name}</div>
+              <p className="mt-2 text-xs text-fg-muted">Create an A/B variant and compare profile-to-join conversion.</p>
+              <Button className="mt-4" size="sm" variant="outline">Queue test</Button>
+              </div>
+          ))}
+        </div>
       </section>
     </div>
   );

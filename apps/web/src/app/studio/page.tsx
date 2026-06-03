@@ -3,18 +3,22 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { fetchApi } from "@/lib/platform-api";
+import { fetchApi, type ApiMarketplaceProduct } from "@/lib/platform-api";
+import { useAuth } from "@/components/AuthProvider";
 import { useLocale } from "@/components/LocaleProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
 import { Input } from "@/components/ui/Input";
 
 export default function StudioPage() {
   const { t } = useLocale();
+  const { user, refresh } = useAuth();
   const router = useRouter();
-  const [tab, setTab] = React.useState<"project" | "server">("project");
+  const [tab, setTab] = React.useState<"dashboard" | "product" | "project" | "server">("dashboard");
   const [msg, setMsg] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
+  const [products, setProducts] = React.useState<ApiMarketplaceProduct[]>([]);
 
   const [projectName, setProjectName] = React.useState("");
   const [projectDesc, setProjectDesc] = React.useState("");
@@ -24,6 +28,23 @@ export default function StudioPage() {
   const [serverGame, setServerGame] = React.useState("dayz");
   const [host, setHost] = React.useState("127.0.0.1");
   const [port, setPort] = React.useState("27015");
+
+  const [productTitle, setProductTitle] = React.useState("");
+  const [productDesc, setProductDesc] = React.useState("");
+  const [productType, setProductType] = React.useState("mod");
+  const [productGame, setProductGame] = React.useState("dayz");
+  const [productPrice, setProductPrice] = React.useState("349");
+  const [productTags, setProductTags] = React.useState("hardcore,ui");
+
+  const loadCreatorProducts = React.useCallback(() => {
+    fetchApi<{ items: ApiMarketplaceProduct[]; total: number }>("/marketplace/creator/products")
+      .then((r) => setProducts(r.items))
+      .catch(() => setProducts([]));
+  }, []);
+
+  React.useEffect(() => {
+    if (user) loadCreatorProducts();
+  }, [user, loadCreatorProducts]);
 
   const submitProject = async () => {
     setLoading(true);
@@ -70,6 +91,41 @@ export default function StudioPage() {
     }
   };
 
+  const submitProduct = async () => {
+    setLoading(true);
+    setMsg(null);
+    try {
+      const r = await fetchApi<ApiMarketplaceProduct>("/marketplace/products", {
+        method: "POST",
+        body: JSON.stringify({
+          title: productTitle,
+          short_description: productDesc,
+          description: productDesc,
+          product_type: productType,
+          game_slug: productGame,
+          price_rub: Number(productPrice || 0),
+          is_free: Number(productPrice || 0) === 0,
+          tags: productTags.split(",").map((s) => s.trim()).filter(Boolean),
+          version: "1.0.0",
+        }),
+      });
+      setMsg(`Продукт отправлен на модерацию: ${r.title}`);
+      setProductTitle("");
+      setProductDesc("");
+      await refresh();
+      loadCreatorProducts();
+      setTab("dashboard");
+    } catch (e: unknown) {
+      setMsg(e instanceof Error ? e.message : t.studio.signInFirst);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totalSales = products.reduce((sum, product) => sum + product.sales_count, 0);
+  const pending = products.filter((product) => product.moderation_status === "pending").length;
+  const approved = products.filter((product) => product.moderation_status === "approved").length;
+
   return (
     <div className="space-y-10 pb-14">
       <section className="holo-panel rounded-[2.7rem] p-8">
@@ -80,29 +136,92 @@ export default function StudioPage() {
         <p className="mt-4 text-fg-muted">{t.studio.subtitle}</p>
       </section>
 
-      <div className="flex gap-2">
-        {(["project", "server"] as const).map((tb) => (
-          <button
-            key={tb}
-            type="button"
-            onClick={() => setTab(tb)}
-            className={
-              tab === tb
-                ? "rounded-full border border-primary/50 bg-primary/15 px-4 py-2 text-xs text-primary"
-                : "rounded-full border border-white/10 px-4 py-2 text-xs text-fg-muted"
-            }
-          >
-            {tb === "project" ? t.studio.project : t.studio.server}
-          </button>
+      {!user ? (
+        <section className="holo-panel rounded-[2rem] p-6">
+          <h2 className="text-2xl font-semibold">Войдите, чтобы открыть Studio</h2>
+          <Link href="/auth/login" className="mt-5 inline-block">
+            <Button>Войти</Button>
+          </Link>
+        </section>
+      ) : null}
+
+      {user ? (
+        <div className="flex flex-wrap gap-2">
+          {(["dashboard", "product", "project", "server"] as const).map((tb) => (
+            <Chip key={tb} active={tab === tb} onClick={() => setTab(tb)}>
+              {tb === "dashboard" ? "Dashboard" : tb === "product" ? "Продукт" : tb === "project" ? t.studio.project : t.studio.server}
+            </Chip>
         ))}
-        <Link href="/billing" className="ml-auto text-sm text-primary hover:underline">
-          {t.studio.billingLink}
-        </Link>
-      </div>
+          <Link href="/billing" className="ml-auto text-sm text-primary hover:underline">
+            {t.studio.billingLink}
+          </Link>
+        </div>
+      ) : null}
 
       {msg ? <p className="text-sm text-primary">{msg}</p> : null}
 
-      {tab === "project" ? (
+      {user && tab === "dashboard" ? (
+        <section className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="organism-panel rounded-2xl p-5">
+              <div className="text-sm text-fg-muted">Продуктов</div>
+              <div className="mt-2 text-3xl font-semibold">{products.length}</div>
+            </div>
+            <div className="organism-panel rounded-2xl p-5">
+              <div className="text-sm text-fg-muted">Approved / Pending</div>
+              <div className="mt-2 text-3xl font-semibold">{approved}/{pending}</div>
+            </div>
+            <div className="organism-panel rounded-2xl p-5">
+              <div className="text-sm text-fg-muted">Продаж</div>
+              <div className="mt-2 text-3xl font-semibold text-gradient">{totalSales}</div>
+            </div>
+          </div>
+          <div className="holo-panel rounded-[2rem] p-6">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-2xl font-semibold">Мои продукты</h2>
+              <Button size="sm" variant="premium" onClick={() => setTab("product")}>Новый продукт</Button>
+            </div>
+            <div className="mt-5 space-y-3">
+              {products.map((product) => (
+                <div key={product.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <Link href={`/marketplace/${product.slug}`} className="font-medium hover:text-primary">
+                        {product.title}
+                      </Link>
+                      <div className="mt-1 text-xs text-fg-muted">
+                        {product.product_type} · {product.game_slug ?? "any"} · {product.sales_count} sales
+                      </div>
+                    </div>
+                    <Badge tone={product.moderation_status === "approved" ? "success" : product.moderation_status === "rejected" ? "danger" : "warning"}>
+                      {product.moderation_status ?? "pending"}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+              {products.length === 0 ? <p className="text-sm text-fg-muted">Пока нет продуктов. Создайте первый мод или аддон.</p> : null}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {user && tab === "product" ? (
+        <div className="holo-panel max-w-2xl space-y-4 rounded-[2rem] p-6">
+          <Input value={productTitle} onChange={(e) => setProductTitle(e.target.value)} placeholder="Название продукта" />
+          <Input value={productDesc} onChange={(e) => setProductDesc(e.target.value)} placeholder="Короткое описание" />
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Input value={productType} onChange={(e) => setProductType(e.target.value)} placeholder="mod / addon / plugin" />
+            <Input value={productGame} onChange={(e) => setProductGame(e.target.value)} placeholder="game slug" />
+            <Input value={productPrice} onChange={(e) => setProductPrice(e.target.value)} placeholder="Цена ₽" />
+          </div>
+          <Input value={productTags} onChange={(e) => setProductTags(e.target.value)} placeholder="tags через запятую" />
+          <Button disabled={loading || !productTitle} onClick={submitProduct}>
+            Отправить на модерацию
+          </Button>
+        </div>
+      ) : null}
+
+      {user && tab === "project" ? (
         <div className="holo-panel max-w-xl space-y-4 rounded-[2rem] p-6">
           <Input value={projectName} onChange={(e) => setProjectName(e.target.value)} placeholder={t.studio.projectName} />
           <Input value={projectDesc} onChange={(e) => setProjectDesc(e.target.value)} placeholder={t.studio.description} />
@@ -111,7 +230,9 @@ export default function StudioPage() {
             {t.studio.createProject}
           </Button>
         </div>
-      ) : (
+      ) : null}
+
+      {user && tab === "server" ? (
         <div className="holo-panel max-w-xl space-y-4 rounded-[2rem] p-6">
           <Input value={serverName} onChange={(e) => setServerName(e.target.value)} placeholder={t.studio.serverName} />
           <Input value={serverGame} onChange={(e) => setServerGame(e.target.value)} placeholder={t.studio.gameSlug} />
@@ -123,7 +244,7 @@ export default function StudioPage() {
             {t.studio.addServer}
           </Button>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

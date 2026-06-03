@@ -10,8 +10,11 @@ from app.db.models.billing import Plan, Subscription, Wallet, WalletTransaction,
 PROMO_COSTS = {"featured": 50, "boost": 30, "pinned": 20}
 
 
-async def list_plans(db: AsyncSession) -> list[Plan]:
-    return (await db.execute(select(Plan).where(Plan.is_active == True))).scalars().all()  # noqa: E712
+async def list_plans(db: AsyncSession, audience: str | None = None) -> list[Plan]:
+    stmt = select(Plan).where(Plan.is_active == True).order_by(Plan.sort_order)  # noqa: E712
+    if audience:
+        stmt = stmt.where(Plan.audience == audience)
+    return (await db.execute(stmt)).scalars().all()
 
 
 async def get_plan_by_slug(db: AsyncSession, slug: str) -> Plan | None:

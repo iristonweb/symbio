@@ -10,8 +10,8 @@ router = APIRouter()
 
 
 @router.get("/plans")
-async def get_plans(db: AsyncSession = Depends(get_db)):
-    plans = await billing_crud.list_plans(db)
+async def get_plans(audience: str | None = None, db: AsyncSession = Depends(get_db)):
+    plans = await billing_crud.list_plans(db, audience=audience)
     return {
         "items": [
             {
@@ -19,8 +19,10 @@ async def get_plans(db: AsyncSession = Depends(get_db)):
                 "slug": p.slug,
                 "name": p.name,
                 "description": p.description,
+                "audience": getattr(p, "audience", "site_owner"),
                 "price_monthly": p.price_monthly,
                 "credits_monthly": p.credits_monthly,
+                "commission_percent": getattr(p, "commission_percent", None),
                 "features": p.features,
             }
             for p in plans

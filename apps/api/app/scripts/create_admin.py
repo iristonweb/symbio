@@ -29,8 +29,16 @@ async def _run(email: str, password: str):
         if existing:
             print("Admin already exists:", email)
             return
-        user = await create_user(db, email=email, hashed_password=hash_password(password), roles=["user", "admin"])
-        print("Created admin:", user.email)
+        user = await create_user(
+            db,
+            email=email,
+            hashed_password=hash_password(password),
+            roles=["user", "admin", "moderator", "site_owner", "creator"],
+            nickname="symbio-admin",
+            email_verified=True,
+        )
+        await db.commit()
+        print("Created admin:", user.email, "nickname:", user.nickname)
 
 def main():
     p = argparse.ArgumentParser()
