@@ -20,6 +20,7 @@ from app.api.routes import (
     marketplace,
     admin_users,
     ecosystem,
+    cron,
 )
 
 app = FastAPI(title="SYMBIO API", version="0.2.0")
@@ -34,6 +35,7 @@ app.add_middleware(
 )
 
 app.include_router(health.router, tags=["health"])
+app.include_router(cron.router, prefix="/cron", tags=["cron"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(games.router, prefix="/games", tags=["games"])
 app.include_router(projects.router, prefix="/projects", tags=["projects"])

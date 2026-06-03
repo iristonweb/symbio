@@ -7,31 +7,7 @@ from datetime import datetime, timezone
 import httpx
 
 from app.core.config import settings
-
-# Steam appid → SYMBIO game slug (extend as catalog grows).
-STEAM_APP_TO_SYMBIO_SLUG: dict[int, str] = {
-    221100: "dayz",
-    252490: "rust",
-    107410: "arma-3",
-    346110: "ark-survival-evolved",
-    440: "team-fortress-2",
-    730: "counter-strike-2",
-    1623730: "palworld",
-    892970: "valheim",
-    108600: "project-zomboid",
-    4000: "garrys-mod",
-    244850: "space-engineers",
-    105600: "terraria",
-    251570: "7-days-to-die",
-    242760: "the-forest",
-    1326470: "sons-of-the-forest",
-    393380: "squad",
-    686810: "hell-let-loose",
-    581320: "insurgency-sandstorm",
-    513710: "scum",
-    440900: "conan-exiles",
-    304930: "unturned",
-}
+from app.services.steam_app_map import STEAM_APP_TO_SYMBIO_SLUG, slug_for_appid
 
 DEV_OWNED_GAMES = [
     {"appid": 221100, "name": "DayZ", "playtime_forever": 1200, "playtime_2weeks": 45, "img_icon_url": ""},
@@ -41,7 +17,7 @@ DEV_OWNED_GAMES = [
 
 
 def symbio_slug_for_appid(appid: int) -> str | None:
-    return STEAM_APP_TO_SYMBIO_SLUG.get(appid)
+    return slug_for_appid(appid)
 
 
 def steam_icon_url(appid: int, icon_hash: str) -> str | None:
@@ -79,9 +55,8 @@ async def fetch_owned_games_raw(steam_id: str) -> tuple[list[dict], str]:
     return games, "ok"
 
 
-def normalize_owned_game(raw: dict) -> dict:
+def _normalize_with_slug(raw: dict, slug: str | None) -> dict:
     appid = int(raw.get("appid", 0))
-    slug = symbio_slug_for_appid(appid)
     icon = raw.get("img_icon_url") or ""
     return {
         "appid": appid,
@@ -94,11 +69,51 @@ def normalize_owned_game(raw: dict) -> dict:
     }
 
 
+def normalize_owned_game(raw: dict) -> dict:
+    appid = int(raw.get("appid", 0))
+    return _normalize_with_slug(raw, symbio_slug_for_appid(appid))
+
+
+async def user_owns_symbio_game(identity_meta: dict | None, game_slug: str) -> bool:
+    if not identity_meta or not game_slug:
+        return False
+    slugs = identity_meta.get("library_matched_slugs") or []
+    if game_slug in slugs:
+        return True
+    for g in identity_meta.get("owned_games") or []:
+        if g.get("symbio_slug") == game_slug:
+            return True
+    return False
+
+
+async def fetch_recommended_servers(db, matched_slugs: list[str], *, limit: int = 8) -> list[dict]:
+    from app.db.crud.servers import list_servers
+
+    if not matched_slugs:
+        return []
+    collected: list[dict] = []
+    per_game = max(2, limit // max(1, len(matched_slugs)))
+    for slug in matched_slugs[:6]:
+        batch = await list_servers(db, game=slug, sort="online", fresh_minutes=10080, limit=per_game)
+        collected.extend(batch)
+    seen: set[str] = set()
+    unique: list[dict] = []
+    for item in sorted(collected, key=lambda s: s.get("snapshot", {}).get("online", 0), reverse=True):
+        sid = item.get("id")
+        if sid and sid not in seen:
+            seen.add(sid)
+            unique.append(item)
+        if len(unique) >= limit:
+            break
+    return unique
+
+
 async def build_library_payload(
     steam_id: str,
     *,
     cached_meta: dict | None = None,
     force_refresh: bool = False,
+    db=None,
 ) -> dict:
     """Fetch from Steam (or cache) and return API-ready library document."""
     if not force_refresh and cached_meta:
@@ -108,8 +123,21 @@ async def build_library_payload(
             return _library_from_cache(steam_id, cached_meta)
 
     raw_games, status = await fetch_owned_games_raw(steam_id)
-    games = [normalize_owned_game(g) for g in raw_games]
-    matched_slugs = sorted({g["symbio_slug"] for g in games if g.get("symbio_slug")})
+    games: list[dict] = []
+    matched_slugs_set: set[str] = set()
+    if db is not None:
+        from app.db.crud.steam_games import resolve_symbio_slug_for_appid
+
+        for raw in raw_games:
+            appid = int(raw.get("appid", 0))
+            slug = await resolve_symbio_slug_for_appid(db, appid)
+            games.append(_normalize_with_slug(raw, slug))
+            if slug:
+                matched_slugs_set.add(slug)
+    else:
+        games = [normalize_owned_game(g) for g in raw_games]
+        matched_slugs_set = {g["symbio_slug"] for g in games if g.get("symbio_slug")}
+    matched_slugs = sorted(matched_slugs_set)
 
     return {
         "steam_id": steam_id,

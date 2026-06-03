@@ -173,6 +173,7 @@ async def _steam_library_for_user(db: AsyncSession, user: User, *, force_refresh
         identity.provider_user_id,
         cached_meta=identity.meta,
         force_refresh=force_refresh,
+        db=db,
     )
     meta_patch = doc.pop("_meta_patch", None)
     if meta_patch:
@@ -201,6 +202,25 @@ async def me_steam_library(user: User = Depends(get_current_user), db: AsyncSess
     payload = await _steam_library_for_user(db, user, force_refresh=False)
     await db.commit()
     return payload
+
+
+@router.get("/me/steam/recommendations")
+async def me_steam_recommendations(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    limit: int = Query(default=8, ge=1, le=20),
+):
+    identity = await tokens_crud.get_user_provider_identity(db, user.id, "steam")
+    if not identity:
+        return {"linked": False, "items": [], "matched_slugs": []}
+    slugs = list(identity.meta.get("library_matched_slugs") or [])
+    if not slugs:
+        for g in identity.meta.get("owned_games") or []:
+            if g.get("symbio_slug"):
+                slugs.append(g["symbio_slug"])
+        slugs = sorted(set(slugs))
+    items = await steam_library.fetch_recommended_servers(db, slugs, limit=limit)
+    return {"linked": True, "matched_slugs": slugs, "items": items}
 
 
 @router.post("/me/steam/library/sync")
@@ -418,6 +438,7 @@ async def _sync_steam_library_on_login(db: AsyncSession, user: User) -> None:
             identity.provider_user_id,
             cached_meta=identity.meta,
             force_refresh=True,
+            db=db,
         )
         if doc.get("_meta_patch"):
             await tokens_crud.merge_identity_meta(db, identity, doc["_meta_patch"])

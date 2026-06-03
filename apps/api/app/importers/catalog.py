@@ -134,6 +134,9 @@ async def ensure_game(
         return existing, False
     if dry_run:
         return None, True
+    from app.services.steam_app_map import steam_meta_for_slug
+
+    source_meta = {"imported_from": "wargm", "metadata_only": True, **steam_meta_for_slug(slug)}
     game = Game(
         slug=slug,
         title=(title or title_from_slug(slug))[:200],
@@ -141,7 +144,7 @@ async def ensure_game(
         platforms=["pc"] if category == "client" else [category],
         short_description=f"{title or title_from_slug(slug)} — community servers indexed on SYMBIO.",
         source_url=source_url,
-        source_meta={"imported_from": "wargm", "metadata_only": True},
+        source_meta=source_meta,
     )
     db.add(game)
     await db.flush()

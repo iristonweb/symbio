@@ -23,6 +23,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { hasRole } from "@/lib/auth";
 import { platformApi, type EcosystemRadar } from "@/lib/platform-api";
 import { gameLabel, humanizeSlug } from "@/lib/display-labels";
+import { SteamLibraryPicks } from "@/components/SteamLibraryPicks";
 
 type HomeServer = {
   id: string;
@@ -302,6 +303,8 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      <SteamLibraryPicks />
 
       <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <EcosystemRadarPanel

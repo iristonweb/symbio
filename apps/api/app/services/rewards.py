@@ -16,6 +16,7 @@ MIN_ACCOUNT_AGE_HOURS = 48
 MULT_EMAIL_ONLY = 1.0
 MULT_ONE_OAUTH = 1.25
 MULT_BOTH_OAUTH = 1.35
+MULT_OWNS_VOTED_GAME = 1.1
 SOCIAL_PROVIDERS = frozenset({"google", "steam"})
 
 # Referral
@@ -44,6 +45,12 @@ def compute_trust_multiplier(email_verified: bool, oauth_providers: set[str]) ->
     if len(linked) >= 1:
         return MULT_ONE_OAUTH
     return MULT_EMAIL_ONLY
+
+
+def apply_owns_game_bonus(multiplier: float, owns_voted_game: bool) -> float:
+    if owns_voted_game:
+        return round(min(multiplier * MULT_OWNS_VOTED_GAME, 1.5), 2)
+    return multiplier
 
 
 def compute_vote_reward_amount(base: int, multiplier: float, is_first_vote_today: bool) -> int:

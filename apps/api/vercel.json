@@ -12,5 +12,11 @@
       "src": "/(.*)",
       "dest": "api/index.py"
     }
+  ],
+  "crons": [
+    {
+      "path": "/cron/refresh-servers?limit=400",
+      "schedule": "*/30 * * * *"
+    }
   ]
 }

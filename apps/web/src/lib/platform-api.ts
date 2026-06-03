@@ -221,6 +221,10 @@ export const platformApi = {
   steamLibrary: () => fetchApi<SteamLibraryInfo>("/auth/me/steam/library"),
   steamLibrarySync: () =>
     fetchApi<SteamLibraryInfo>("/auth/me/steam/library/sync", { method: "POST" }),
+  steamRecommendations: (limit = 8) =>
+    fetchApi<{ linked: boolean; matched_slugs: string[]; items: ApiServer[] }>(
+      `/auth/me/steam/recommendations?limit=${limit}`
+    ),
   oauthStart: (provider: "google" | "steam", options?: { link?: boolean }) => {
     const q = options?.link ? "?link=true" : "";
     return fetch(`${API_URL}/auth/${provider}/start${q}`, {
@@ -243,6 +247,7 @@ export type VoteResult = {
   next_vote_at: string | null;
   social_providers: string[];
   email_verified: boolean;
+  owns_game_bonus?: boolean;
 };
 
 export type ReferralInfo = {

@@ -42,5 +42,7 @@ class Settings(BaseSettings):
 
     DEFAULT_COMMISSION_PERCENT: float = 15.0
 
+    CRON_SECRET: str = ""
+
 
 settings = Settings()

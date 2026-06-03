@@ -21,6 +21,18 @@ const gameLabels: Record<string, string> = {
   scum: "SCUM",
   squad: "Squad",
   unturned: "Unturned",
+  palworld: "Palworld",
+  valheim: "Valheim",
+  "left-4-dead-2": "Left 4 Dead 2",
+  "team-fortress-2": "Team Fortress 2",
+  satisfactory: "Satisfactory",
+  "the-forest": "The Forest",
+  "sons-of-the-forest": "Sons of the Forest",
+  "insurgency-sandstorm": "Insurgency: Sandstorm",
+  "hell-let-loose": "Hell Let Loose",
+  "space-engineers": "Space Engineers",
+  terraria: "Terraria",
+  "conan-exiles": "Conan Exiles",
 };
 
 const categoryLabels: Record<string, string> = {

@@ -1,12 +1,13 @@
 import pytest
 
 from app.services import steam_library
+from app.services.steam_app_map import slug_for_appid
 
 
 def test_symbio_slug_for_known_appids():
-    assert steam_library.symbio_slug_for_appid(221100) == "dayz"
-    assert steam_library.symbio_slug_for_appid(252490) == "rust"
-    assert steam_library.symbio_slug_for_appid(999999) is None
+    assert slug_for_appid(221100) == "dayz"
+    assert slug_for_appid(252490) == "rust"
+    assert slug_for_appid(999999) is None
 
 
 def test_normalize_owned_game():

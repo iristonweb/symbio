@@ -51,7 +51,8 @@ export default function ServerProfilePage() {
       const r: VoteResult = await platformApi.voteServer(id);
       setServer((s) => (s ? { ...s, votes: r.votes } : s));
       if (r.rewarded && r.earned_tokens > 0) {
-        setToast(t.rewards.voteSuccess.replace("{n}", String(r.earned_tokens)).replace("{m}", String(r.multiplier)));
+        const base = t.rewards.voteSuccess.replace("{n}", String(r.earned_tokens)).replace("{m}", String(r.multiplier));
+        setToast(r.owns_game_bonus ? `${base} · ${t.rewards.ownsGameBonus}` : base);
       } else if (!r.email_verified) {
         setToast(t.rewards.voteNoRewardVerify);
       } else {

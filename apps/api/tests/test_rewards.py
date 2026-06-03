@@ -23,6 +23,11 @@ def test_vote_reward_no_daily_bonus():
     assert amount == 1
 
 
+def test_apply_owns_game_bonus():
+    assert r.apply_owns_game_bonus(1.25, False) == 1.25
+    assert r.apply_owns_game_bonus(1.25, True) == 1.38
+
+
 def test_referral_milestones_defined():
     assert r.REFERRAL_MILESTONE_100 == 100
     assert r.REFERRAL_TOP_PLAN_SLUG == "owner-network"

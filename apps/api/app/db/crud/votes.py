@@ -10,6 +10,7 @@ from app.db.models.server import Server
 from app.db.models.vote import ServerVote
 from app.db.models.billing import WalletTransaction, Wallet
 from app.services import rewards as reward_cfg
+from app.services.steam_library import user_owns_symbio_game
 
 
 class VoteError(Exception):
@@ -103,6 +104,9 @@ async def cast_server_vote(
 
     providers = await _oauth_providers(db, user_id)
     multiplier = reward_cfg.compute_trust_multiplier(email_verified, providers)
+    steam_identity = await tokens_crud.get_user_provider_identity(db, user_id, "steam")
+    owns_game = await user_owns_symbio_game(steam_identity.meta if steam_identity else None, server.game)
+    multiplier = reward_cfg.apply_owns_game_bonus(multiplier, owns_game)
 
     can_reward = email_verified and reward_cfg.account_age_ok(user_created_at)
     if server_owner_id and server_owner_id == user_id:
@@ -166,4 +170,5 @@ async def cast_server_vote(
         "next_vote_at": next_vote_at,
         "social_providers": sorted(providers & reward_cfg.SOCIAL_PROVIDERS),
         "email_verified": email_verified,
+        "owns_game_bonus": owns_game,
     }

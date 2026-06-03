@@ -186,6 +186,7 @@ class VoteResponse(BaseModel):
     next_vote_at: str | None = None
     social_providers: list[str] = []
     email_verified: bool = False
+    owns_game_bonus: bool = False
 
 
 class PromotionCreate(BaseModel):
