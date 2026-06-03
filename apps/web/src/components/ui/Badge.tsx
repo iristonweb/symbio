@@ -9,21 +9,17 @@ export function Badge({
   tone?: "neutral" | "success" | "warning" | "danger" | "info";
 }) {
   const tones: Record<string, string> = {
-    neutral: "bg-[color:var(--card2)] text-[color:var(--fg)] border-[color:var(--border)]",
-    success:
-      "bg-[rgba(180,255,57,0.14)] text-[color:var(--accent)] border-[rgba(180,255,57,0.35)]",
-    warning:
-      "bg-[rgba(255,190,70,0.12)] text-[rgba(255,190,70,0.95)] border-[rgba(255,190,70,0.35)]",
-    danger:
-      "bg-[rgba(255,80,110,0.12)] text-[rgba(255,80,110,0.95)] border-[rgba(255,80,110,0.35)]",
-    info:
-      "bg-[rgba(0,245,212,0.12)] text-[color:var(--primary)] border-[rgba(0,245,212,0.35)]",
+    neutral: "bg-white/8 text-fg border-white/12",
+    success: "bg-accent/15 text-accent border-accent/35",
+    warning: "bg-gold/15 text-gold border-gold/35",
+    danger: "bg-[rgba(255,80,110,0.12)] text-[rgba(255,140,160,0.95)] border-[rgba(255,80,110,0.35)]",
+    info: "bg-primary/15 text-primary border-primary/35",
   };
 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium",
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium",
         tones[tone],
         className
       )}

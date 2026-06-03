@@ -3,18 +3,21 @@
 import * as React from "react";
 import { cn } from "@/lib/cn";
 
-export type InputProps = React.InputHTMLAttributes<HTMLInputElement>;
-
-export function Input({ className, ...props }: InputProps) {
-  return (
-    <input
-      className={cn(
-        "h-11 w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] px-3 text-sm text-[color:var(--fg)] " +
-          "placeholder:text-[color:var(--muted)] outline-none " +
-          "focus:ring-2 focus:ring-[rgba(0,245,212,0.35)] focus:border-[rgba(0,245,212,0.6)]",
-        className
-      )}
-      {...props}
-    />
-  );
-}
+export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+  ({ className, ...props }, ref) => {
+    return (
+      <input
+        ref={ref}
+        className={cn(
+          "h-11 w-full rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-fg outline-none",
+          "placeholder:text-fg-muted",
+          "focus:border-primary/40 focus:ring-2 focus:ring-primary/20",
+          "transition",
+          className
+        )}
+        {...props}
+      />
+    );
+  }
+);
+Input.displayName = "Input";

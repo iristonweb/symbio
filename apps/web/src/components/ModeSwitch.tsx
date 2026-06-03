@@ -8,15 +8,15 @@ export function ModeSwitch() {
   const { mode, setMode } = useUiMode();
 
   return (
-    <div className="inline-flex items-center rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-1">
+    <div className="inline-flex items-center rounded-2xl border border-white/10 bg-white/5 p-1 backdrop-blur-xl">
       <button
         type="button"
         onClick={() => setMode("discover")}
         className={cn(
           "h-9 rounded-xl px-3 text-sm font-medium transition",
           mode === "discover"
-            ? "bg-[color:var(--card2)] text-[color:var(--fg)] shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
-            : "text-[color:var(--muted)] hover:text-[color:var(--fg)]"
+            ? "bg-white/12 text-fg shadow-glass"
+            : "text-fg-muted hover:text-fg"
         )}
         aria-pressed={mode === "discover"}
       >
@@ -28,8 +28,8 @@ export function ModeSwitch() {
         className={cn(
           "h-9 rounded-xl px-3 text-sm font-medium transition",
           mode === "expert"
-            ? "bg-[color:var(--card2)] text-[color:var(--fg)] shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
-            : "text-[color:var(--muted)] hover:text-[color:var(--fg)]"
+            ? "bg-white/12 text-fg shadow-glass"
+            : "text-fg-muted hover:text-fg"
         )}
         aria-pressed={mode === "expert"}
       >

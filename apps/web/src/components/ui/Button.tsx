@@ -3,7 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/cn";
 
-type Variant = "primary" | "secondary" | "ghost";
+type Variant = "primary" | "secondary" | "ghost" | "outline";
 type Size = "sm" | "md" | "lg";
 
 export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -13,25 +13,27 @@ export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const baseStyles =
-  "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition " +
-  "focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary)] " +
+  "inline-flex items-center justify-center gap-2 rounded-2xl font-medium transition will-change-transform " +
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 " +
   "disabled:opacity-50 disabled:pointer-events-none select-none";
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-[color:var(--primary)] text-[color:var(--bg)] shadow-[0_12px_40px_rgba(0,245,212,0.18)] " +
-    "hover:translate-y-[-1px] hover:shadow-[0_18px_55px_rgba(0,245,212,0.22)] active:translate-y-[0px]",
+    "text-black bg-[linear-gradient(90deg,rgb(var(--primary)_/_0.96),rgb(var(--accent)_/_0.9))] " +
+    "shadow-[0_14px_45px_rgb(var(--primary)_/_0.2)] hover:-translate-y-0.5 hover:shadow-glow active:translate-y-0",
   secondary:
-    "bg-[color:var(--card)] text-[color:var(--fg)] border border-[color:var(--border)] " +
-    "hover:bg-[color:var(--card2)] hover:translate-y-[-1px] active:translate-y-[0px]",
+    "bg-surface/80 text-fg border border-white/12 backdrop-blur-xl " +
+    "hover:bg-white/10 hover:-translate-y-0.5 active:translate-y-0",
   ghost:
-    "bg-transparent text-[color:var(--fg)] hover:bg-[color:var(--card)] border border-transparent hover:border-[color:var(--border)]",
+    "bg-transparent text-fg border border-transparent hover:bg-white/6 hover:border-white/10",
+  outline:
+    "bg-transparent text-fg border border-white/14 hover:bg-white/6 hover:border-primary/30",
 };
 
 const sizes: Record<Size, string> = {
   sm: "h-9 px-3 text-sm",
   md: "h-11 px-4 text-sm",
-  lg: "h-12 px-5 text-base",
+  lg: "h-12 px-5 text-[15px]",
 };
 
 export function Button({
@@ -43,13 +45,10 @@ export function Button({
   ...props
 }: ButtonProps) {
   return (
-    <button
-      className={cn(baseStyles, variants[variant], sizes[size], className)}
-      {...props}
-    >
+    <button className={cn(baseStyles, variants[variant], sizes[size], className)} {...props}>
       {isLoading ? (
         <span className="inline-flex items-center gap-2">
-          <span className="h-4 w-4 rounded-full border-2 border-[color:var(--bg)] border-t-transparent animate-spin" />
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black" />
           <span className="opacity-90">Loading</span>
         </span>
       ) : (

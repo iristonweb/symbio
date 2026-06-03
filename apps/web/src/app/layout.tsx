@@ -5,8 +5,9 @@ import { Shell } from "@/components/Shell";
 import { UiModeProvider } from "@/components/UiModeProvider";
 
 export const metadata: Metadata = {
-  title: "SYMBIO",
-  description: "UGC marketplace + server hub + creator studio with one-click install.",
+  title: "SYMBIO — UGC Marketplace & Server Hub",
+  description:
+    "Futuristic immersive platform: marketplace mods, server hub, creator studio with one-click install.",
 };
 
 export default function RootLayout({
@@ -16,7 +17,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      <body className="antialiased">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <UiModeProvider>
             <Shell>{children}</Shell>

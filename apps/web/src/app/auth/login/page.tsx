@@ -1,11 +1,12 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AuroraBackground } from "@/components/aurora/AuroraBackground";
+import { motion } from "framer-motion";
+import { GlowCard } from "@/components/immersive/GlowCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 
 export default function LoginPage() {
@@ -27,85 +28,90 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({ username: email, password }),
       });
-
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || "Login failed");
-      }
-
+      if (!res.ok) throw new Error((await res.text()) || "Login failed");
       const data = await res.json();
       localStorage.setItem("token", data.access_token);
       router.push("/admin/audit");
-    } catch (err: any) {
-      setError(err?.message || "Login failed");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Login failed");
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <AuroraBackground className="rounded-[28px] border border-[rgba(255,255,255,0.06)] bg-[rgba(7,10,15,0.55)] shadow-[0_30px_120px_rgba(0,0,0,0.45)]">
-      <div className="px-5 py-10 sm:px-8">
-        <div className="mx-auto max-w-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-2xl font-semibold tracking-tight">Sign in</div>
-              <div className="mt-1 text-sm text-[color:var(--muted)]">Admin + audit access (Sprint 0).</div>
-            </div>
+    <div className="mx-auto max-w-5xl pb-16">
+      <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-center">
+        <motion.div
+          initial={{ opacity: 0, x: -16 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="hidden lg:block"
+        >
+          <Badge tone="info">Auth terminal</Badge>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight">
+            Sign in to <span className="text-gradient">SYMBIO</span>
+          </h1>
+          <p className="mt-4 max-w-md text-sm leading-7 text-fg-muted">
+            Secure access to audit logs, admin tools and creator dashboards. Sprint 0 uses JWT in
+            localStorage.
+          </p>
+          <div className="mt-8 space-y-3">
+            {["Verified sessions", "Audit trail", "Role-based access"].map((t) => (
+              <div
+                key={t}
+                className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm"
+              >
+                <span className="h-2 w-2 rounded-full bg-primary" />
+                {t}
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        <GlowCard className="p-6 sm:p-8">
+          <div className="flex items-center justify-between gap-2 lg:hidden">
+            <h1 className="text-2xl font-semibold">Sign in</h1>
             <Badge tone="info">Auth</Badge>
           </div>
+          <p className="mt-1 text-sm text-fg-muted lg:hidden">Admin + audit access</p>
 
-          <Card className="mt-6 overflow-hidden">
-            <CardHeader className="pb-0">
-              <div className="text-sm font-semibold">Credentials</div>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <form onSubmit={onSubmit} className="space-y-4">
-                <div>
-                  <label className="text-xs text-[color:var(--muted)]">Email</label>
-                  <div className="mt-2">
-                    <Input value={email} onChange={(e) => setEmail(e.target.value)} />
-                  </div>
-                </div>
+          <form onSubmit={onSubmit} className="mt-6 space-y-4">
+            <div>
+              <label className="text-xs text-fg-muted">Email</label>
+              <div className="mt-2">
+                <Input value={email} onChange={(e) => setEmail(e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-fg-muted">Password</label>
+              <div className="mt-2">
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+            </div>
 
-                <div>
-                  <label className="text-xs text-[color:var(--muted)]">Password</label>
-                  <div className="mt-2">
-                    <Input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </div>
-                </div>
+            {error ? (
+              <div className="rounded-2xl border border-[rgba(255,80,110,0.35)] bg-[rgba(255,80,110,0.1)] p-3 text-sm text-[rgba(255,200,210,0.95)]">
+                {error}
+              </div>
+            ) : null}
 
-                {error ? (
-                  <div className="rounded-2xl border border-[rgba(255,80,110,0.35)] bg-[rgba(255,80,110,0.10)] p-3 text-sm text-[rgba(255,200,210,0.95)]">
-                    {error}
-                  </div>
-                ) : null}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <Button type="submit" isLoading={busy}>
+                Sign in
+              </Button>
+              <Link href="/auth/register" className="text-sm text-fg-muted hover:text-fg">
+                Create account →
+              </Link>
+            </div>
 
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <Button type="submit" isLoading={busy} className="w-full sm:w-auto">
-                    Sign in
-                  </Button>
-
-                  <a
-                    className="text-sm text-[color:var(--muted)] hover:text-[color:var(--fg)]"
-                    href="/auth/register"
-                  >
-                    Create account →
-                  </a>
-                </div>
-
-                <div className="text-xs text-[color:var(--muted)]">
-                  API endpoint: <span className="font-mono">{apiUrl}/auth/login</span>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
+            <p className="text-xs text-fg-muted font-mono">{apiUrl}/auth/login</p>
+          </form>
+        </GlowCard>
       </div>
-    </AuroraBackground>
+    </div>
   );
 }

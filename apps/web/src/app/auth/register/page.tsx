@@ -1,11 +1,12 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AuroraBackground } from "@/components/aurora/AuroraBackground";
+import { motion } from "framer-motion";
+import { GlowCard } from "@/components/immersive/GlowCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 
 export default function RegisterPage() {
@@ -27,85 +28,79 @@ export default function RegisterPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || "Register failed");
-      }
-
+      if (!res.ok) throw new Error((await res.text()) || "Register failed");
       router.push("/auth/login");
-    } catch (err: any) {
-      setError(err?.message || "Register failed");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Register failed");
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <AuroraBackground className="rounded-[28px] border border-[rgba(255,255,255,0.06)] bg-[rgba(7,10,15,0.55)] shadow-[0_30px_120px_rgba(0,0,0,0.45)]">
-      <div className="px-5 py-10 sm:px-8">
-        <div className="mx-auto max-w-md">
-          <div className="flex items-center justify-between">
+    <div className="mx-auto max-w-5xl pb-16">
+      <div className="grid gap-8 lg:grid-cols-[0.9fr_1fr] lg:items-center">
+        <GlowCard className="p-6 sm:p-8 order-2 lg:order-1">
+          <div className="flex items-center justify-between gap-2">
+            <h1 className="text-2xl font-semibold">Create account</h1>
+            <Badge tone="info">Creator</Badge>
+          </div>
+          <p className="mt-1 text-sm text-fg-muted">Join the creator economy</p>
+
+          <form onSubmit={onSubmit} className="mt-6 space-y-4">
             <div>
-              <div className="text-2xl font-semibold tracking-tight">Create account</div>
-              <div className="mt-1 text-sm text-[color:var(--muted)]">
-                Sprint 0 registration (email + password).
+              <label className="text-xs text-fg-muted">Email</label>
+              <div className="mt-2">
+                <Input value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
             </div>
-            <Badge tone="info">Auth</Badge>
-          </div>
+            <div>
+              <label className="text-xs text-fg-muted">Password</label>
+              <div className="mt-2">
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+            </div>
 
-          <Card className="mt-6 overflow-hidden">
-            <CardHeader className="pb-0">
-              <div className="text-sm font-semibold">Sign up</div>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <form onSubmit={onSubmit} className="space-y-4">
-                <div>
-                  <label className="text-xs text-[color:var(--muted)]">Email</label>
-                  <div className="mt-2">
-                    <Input value={email} onChange={(e) => setEmail(e.target.value)} />
-                  </div>
-                </div>
+            {error ? (
+              <div className="rounded-2xl border border-[rgba(255,80,110,0.35)] bg-[rgba(255,80,110,0.1)] p-3 text-sm text-[rgba(255,200,210,0.95)]">
+                {error}
+              </div>
+            ) : null}
 
-                <div>
-                  <label className="text-xs text-[color:var(--muted)]">Password</label>
-                  <div className="mt-2">
-                    <Input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </div>
-                </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <Button type="submit" isLoading={busy}>
+                Create account
+              </Button>
+              <Link href="/auth/login" className="text-sm text-fg-muted hover:text-fg">
+                Sign in →
+              </Link>
+            </div>
 
-                {error ? (
-                  <div className="rounded-2xl border border-[rgba(255,80,110,0.35)] bg-[rgba(255,80,110,0.10)] p-3 text-sm text-[rgba(255,200,210,0.95)]">
-                    {error}
-                  </div>
-                ) : null}
+            <p className="text-xs text-fg-muted font-mono">{apiUrl}/auth/register</p>
+          </form>
+        </GlowCard>
 
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <Button type="submit" isLoading={busy} className="w-full sm:w-auto">
-                    Create account
-                  </Button>
-
-                  <a
-                    className="text-sm text-[color:var(--muted)] hover:text-[color:var(--fg)]"
-                    href="/auth/login"
-                  >
-                    I already have an account →
-                  </a>
-                </div>
-
-                <div className="text-xs text-[color:var(--muted)]">
-                  API endpoint: <span className="font-mono">{apiUrl}/auth/register</span>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="order-1 lg:order-2"
+        >
+          <Badge tone="success">Creator onboarding</Badge>
+          <h2 className="mt-4 text-4xl font-semibold tracking-tight">
+            Publish. <span className="text-gradient">Earn.</span> Grow.
+          </h2>
+          <p className="mt-4 max-w-md text-sm leading-7 text-fg-muted">
+            Upload mods, manage versions, track analytics and connect with server communities.
+          </p>
+          <Link href="/studio" className="mt-6 inline-block">
+            <Button variant="outline">Open Creator Studio</Button>
+          </Link>
+        </motion.div>
       </div>
-    </AuroraBackground>
+    </div>
   );
 }
