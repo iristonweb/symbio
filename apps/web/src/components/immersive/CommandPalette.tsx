@@ -4,6 +4,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
+import { useLocale } from "@/components/LocaleProvider";
 
 type Action = {
   label: string;
@@ -12,21 +13,24 @@ type Action = {
   href: string;
 };
 
-const ACTIONS: Action[] = [
-  { label: "Ecosystem command center", kbd: "E", href: "/", hint: "Hero, radar, live organisms" },
-  { label: "Worlds listing", kbd: "W", href: "/servers", hint: "Search and filter living servers" },
-  { label: "Neon Frontier profile", kbd: "N", href: "/servers/neon-frontier", hint: "Rich media, lore, stats, events" },
-  { label: "Add server", kbd: "A", href: "/studio", hint: "Create project and publish world" },
-  { label: "Admin command dashboard", kbd: "D", href: "/admin/dashboard", hint: "Analytics, retention, votes" },
-  { label: "Player profile", kbd: "P", href: "/profile", hint: "Recommendations and community snapshot" },
-  { label: "Audit log", href: "/admin/audit", hint: "Admin audit events" },
-];
-
 export function CommandPalette() {
   const router = useRouter();
+  const { t } = useLocale();
   const [open, setOpen] = React.useState(false);
   const [q, setQ] = React.useState("");
   const dialogRef = React.useRef<HTMLDivElement | null>(null);
+
+  const ACTIONS: Action[] = React.useMemo(
+    () => [
+      { label: t.palette.ecosystem, kbd: "E", href: "/", hint: t.palette.ecosystemHint },
+      { label: t.palette.worlds, kbd: "W", href: "/servers", hint: t.palette.worldsHint },
+      { label: t.palette.studio, kbd: "A", href: "/studio", hint: t.palette.studioHint },
+      { label: t.palette.admin, kbd: "D", href: "/admin/dashboard", hint: t.palette.adminHint },
+      { label: t.palette.profile, kbd: "P", href: "/profile", hint: t.palette.profileHint },
+      { label: t.palette.audit, href: "/admin/audit", hint: t.palette.auditHint },
+    ],
+    [t]
+  );
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -51,7 +55,7 @@ export function CommandPalette() {
       (a) =>
         a.label.toLowerCase().includes(qq) || (a.hint ?? "").toLowerCase().includes(qq)
     );
-  }, [q]);
+  }, [q, ACTIONS]);
 
   const onPick = (a: Action) => {
     setOpen(false);
@@ -82,75 +86,46 @@ export function CommandPalette() {
 
       <div
         className={cn(
-          "fixed left-1/2 top-[12vh] z-[90] w-[min(720px,92vw)] -translate-x-1/2 transition duration-200",
-          open
-            ? "pointer-events-auto translate-y-0 opacity-100"
-            : "pointer-events-none -translate-y-2 opacity-0"
+          "fixed inset-0 z-[81] flex items-start justify-center px-4 pt-[12vh] transition duration-200",
+          open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
         )}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Command palette"
       >
         <div
           ref={dialogRef}
           onPointerMove={onMove}
-          className="glass-strong relative overflow-hidden rounded-3xl shadow-glow-lg"
+          className="command-palette holo-panel w-full max-w-xl overflow-hidden rounded-[2rem] border border-white/12 shadow-glass"
+          onMouseDown={(e) => e.stopPropagation()}
         >
-          <div
-            className="absolute inset-0 opacity-90"
-            style={{
-              background:
-                "radial-gradient(420px circle at var(--mx, 50%) var(--my, 40%), rgb(var(--primary) / 0.14), transparent 65%)",
-            }}
-          />
-          <div className="relative p-4">
-            <div className="flex items-center gap-3">
-              <div className="grid h-9 w-9 place-items-center rounded-2xl border border-white/10 bg-white/5">
-                <span className="text-xs font-semibold tracking-[0.3em] text-gradient">K</span>
-              </div>
-              <input
-                autoFocus={open}
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Jump anywhere… (Ctrl/⌘ K)"
-                className="h-11 w-full rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-fg outline-none placeholder:text-fg-muted focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && filtered[0]) {
-                    e.preventDefault();
-                    onPick(filtered[0]);
-                  }
-                }}
-              />
-            </div>
-
-            <ul className="mt-3 max-h-[320px] overflow-auto rounded-2xl border border-white/10 bg-black/20">
-              {filtered.length === 0 ? (
-                <li className="p-4 text-sm text-fg-muted">No results.</li>
-              ) : (
-                filtered.map((a) => (
-                  <li key={a.href}>
-                    <button
-                      type="button"
-                      className="group flex w-full items-center justify-between px-4 py-3 text-left hover:bg-white/5"
-                      onClick={() => onPick(a)}
-                    >
-                      <div>
-                        <div className="text-sm text-fg">{a.label}</div>
-                        {a.hint ? (
-                          <div className="text-xs text-fg-muted">{a.hint}</div>
-                        ) : null}
-                      </div>
-                      {a.kbd ? (
-                        <kbd className="rounded-lg border border-white/10 bg-black/30 px-2 py-1 text-[10px] text-fg-muted">
-                          {a.kbd}
-                        </kbd>
-                      ) : null}
-                    </button>
-                  </li>
-                ))
-              )}
-            </ul>
+          <div className="border-b border-white/10 px-5 py-4">
+            <input
+              autoFocus
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={t.palette.placeholder}
+              className="w-full bg-transparent text-base text-fg outline-none placeholder:text-fg-muted"
+            />
           </div>
+          <ul className="max-h-[50vh] overflow-y-auto p-2">
+            {filtered.map((a) => (
+              <li key={a.href}>
+                <button
+                  type="button"
+                  onClick={() => onPick(a)}
+                  className="flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left transition hover:bg-white/8"
+                >
+                  <div>
+                    <div className="text-sm font-medium text-fg">{a.label}</div>
+                    {a.hint ? <div className="text-xs text-fg-muted">{a.hint}</div> : null}
+                  </div>
+                  {a.kbd ? (
+                    <span className="rounded-lg border border-white/10 bg-black/30 px-2 py-1 text-[10px] text-fg-muted">
+                      {a.kbd}
+                    </span>
+                  ) : null}
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </>,

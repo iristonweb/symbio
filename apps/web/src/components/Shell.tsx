@@ -3,49 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
-import { useTheme } from "next-themes";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/cn";
 import { ModeSwitch } from "@/components/ModeSwitch";
+import { LangSwitch } from "@/components/LangSwitch";
+import { useLocale } from "@/components/LocaleProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Kbd } from "@/components/ui/Kbd";
 import { SpotlightBackground } from "@/components/immersive/SpotlightBackground";
 import { CommandPalette } from "@/components/immersive/CommandPalette";
-
-const NAV = [
-  { href: "/", label: "Ecosystem" },
-  { href: "/servers", label: "Worlds" },
-  { href: "/servers/neon-frontier", label: "Live Profile" },
-  { href: "/studio", label: "Add Server" },
-  { href: "/admin/dashboard", label: "Command" },
-  { href: "/profile", label: "Profile" },
-];
-
-function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
-  const isDark = theme !== "light";
-
-  return (
-    <button
-      type="button"
-      className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-fg transition hover:bg-white/10"
-      onClick={() => setTheme(isDark ? "light" : "dark")}
-      aria-label="Toggle theme"
-    >
-      {isDark ? (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M21 12.8A8.5 8.5 0 0 1 11.2 3a7.5 7.5 0 1 0 9.8 9.8Z" />
-        </svg>
-      ) : (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z" />
-          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2" />
-        </svg>
-      )}
-    </button>
-  );
-}
 
 function NavLink({ href, label }: { href: string; label: string }) {
   const pathname = usePathname();
@@ -72,6 +39,7 @@ function NavLink({ href, label }: { href: string; label: string }) {
 }
 
 function Brand() {
+  const { t } = useLocale();
   return (
     <div className="flex items-center gap-3">
       <div className="relative h-12 w-12 shrink-0">
@@ -79,24 +47,34 @@ function Brand() {
         <div className="absolute inset-0 rounded-full border border-white/15 bg-black/60 shadow-[0_0_32px_rgb(var(--primary)_/_0.3)]" />
         <img
           src="/symbio-logo.png"
-          alt="SYMBIO logo"
+          alt="SYMBIO"
           className="relative h-12 w-12 rounded-full object-cover ring-1 ring-white/15"
         />
         <div className="pointer-events-none absolute inset-0 rounded-full border border-primary/25 orbit-ring" />
       </div>
       <div className="leading-tight">
         <div className="text-sm font-semibold tracking-[0.28em]">SYMBIO</div>
-        <div className="text-[10px] uppercase tracking-[0.22em] text-fg-muted">
-          living worlds network
-        </div>
+        <div className="text-[10px] uppercase tracking-[0.22em] text-fg-muted">{t.brandTagline}</div>
       </div>
     </div>
   );
 }
 
 export function Shell({ children }: { children: React.ReactNode }) {
+  const { t } = useLocale();
   const [api, setApi] = React.useState<"unknown" | "up" | "down">("unknown");
   const [scrolled, setScrolled] = React.useState(false);
+
+  const NAV = [
+    { href: "/", label: t.nav.home },
+    { href: "/games", label: t.nav.games },
+    { href: "/servers", label: t.nav.servers },
+    { href: "/projects", label: t.nav.projects },
+    { href: "/news", label: t.nav.news },
+    { href: "/contests", label: t.nav.contests },
+    { href: "/studio", label: t.nav.studio },
+    { href: "/billing", label: t.nav.billing },
+  ];
 
   React.useEffect(() => {
     let mounted = true;
@@ -116,6 +94,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const apiLabel =
+    api === "up" ? t.api.online : api === "down" ? t.api.offline : t.api.unknown;
 
   return (
     <div className="relative min-h-screen">
@@ -148,6 +129,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <div className="hidden xl:block">
               <ModeSwitch />
             </div>
+            <LangSwitch />
 
             <button
               type="button"
@@ -181,14 +163,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
                   )}
                 />
               </span>
-              API {api}
+              {apiLabel}
             </Badge>
-
-            <ThemeToggle />
 
             <Link href="/auth/login">
               <Button size="sm" variant="secondary">
-                Sign in
+                {t.nav.signIn}
               </Button>
             </Link>
           </div>
@@ -213,21 +193,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <div className="flex flex-wrap items-center justify-between gap-6">
             <div className="flex items-center gap-2 text-sm text-fg-muted">
               <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_12px_rgb(var(--primary))]" />
-              SYMBIO — premium living ecosystem for competitive worlds
+              {t.footer.tagline}
             </div>
             <div className="flex flex-wrap gap-4 text-sm text-fg-muted">
-              <Link href="/servers" className="hover:text-fg">
-                Worlds
-              </Link>
-              <Link href="/studio" className="hover:text-fg">
-                Add server
-              </Link>
-              <Link href="/admin/dashboard" className="hover:text-fg">
-                Command
-              </Link>
-              <Link href="/profile" className="hover:text-fg">
-                Profile
-              </Link>
+              <Link href="/games" className="hover:text-fg">{t.nav.games}</Link>
+              <Link href="/projects" className="hover:text-fg">{t.nav.projects}</Link>
+              <Link href="/guides" className="hover:text-fg">{t.nav.guides}</Link>
+              <Link href="/promocodes" className="hover:text-fg">{t.nav.promocodes}</Link>
+              <Link href="/admin/imports" className="hover:text-fg">{t.nav.adminImport}</Link>
             </div>
           </div>
         </div>

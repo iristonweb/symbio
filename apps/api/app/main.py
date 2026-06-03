@@ -2,11 +2,24 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.api.routes import health, auth, servers, audit, events, storage
+from app.api.routes import (
+    health,
+    auth,
+    servers,
+    audit,
+    events,
+    storage,
+    games,
+    projects,
+    articles,
+    contests,
+    billing,
+    search,
+    imports,
+)
 
-app = FastAPI(title="SYMBIO API", version="0.1.0")
+app = FastAPI(title="SYMBIO API", version="0.2.0")
 
-# CORS
 origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
@@ -18,16 +31,24 @@ app.add_middleware(
 
 app.include_router(health.router, tags=["health"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(games.router, prefix="/games", tags=["games"])
+app.include_router(projects.router, prefix="/projects", tags=["projects"])
 app.include_router(servers.router, prefix="/servers", tags=["servers"])
+app.include_router(articles.router, prefix="/articles", tags=["articles"])
+app.include_router(contests.router, prefix="/contests", tags=["contests"])
+app.include_router(billing.router, prefix="/billing", tags=["billing"])
+app.include_router(search.router, prefix="/search", tags=["search"])
+app.include_router(imports.router, prefix="/admin/imports", tags=["admin-imports"])
 app.include_router(audit.router, prefix="/admin", tags=["admin"])
 app.include_router(events.router, prefix="/events", tags=["events"])
 app.include_router(storage.router, prefix="/storage", tags=["storage"])
+
 
 @app.get("/")
 async def root():
     return {
         "name": "SYMBIO API",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "health": "/health",
         "docs": "/docs",
         "openapi": "/openapi.json",
@@ -36,5 +57,4 @@ async def root():
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
-    # Avoid noisy 404s in dev logs
     return {}

@@ -9,10 +9,12 @@ import { OrganismPanel, MetricCapsule, PulseOrb } from "@/components/immersive/O
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { useLocale } from "@/components/LocaleProvider";
 
 const playstyles = ["Hardcore", "MilSim", "PvP", "SMP", "Economy", "Roleplay"];
 
 export default function HomePage() {
+  const { t } = useLocale();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
   const [query, setQuery] = React.useState("");
   const [selected, setSelected] = React.useState("Hardcore");
@@ -49,30 +51,29 @@ export default function HomePage() {
             className="flex flex-col justify-center"
           >
             <div className="flex flex-wrap gap-2">
-              <Badge tone={apiOnline ? "success" : "danger"}>{apiOnline ? "network alive" : "api sleeping"}</Badge>
-              <Badge tone="info">symbiosis of worlds</Badge>
+              <Badge tone={apiOnline ? "success" : "danger"}>
+                {apiOnline ? t.home.apiAlive : t.home.apiSleep}
+              </Badge>
+              <Badge tone="info">{t.home.badge}</Badge>
             </div>
             <h1 className="mt-6 max-w-4xl text-5xl font-semibold leading-[0.95] tracking-tight text-fg sm:text-7xl lg:text-8xl">
-              Servers are no longer lists.
+              {t.home.title1}
               <span className="block bg-gradient-to-r from-cyan-200 via-lime-200 to-fuchsia-300 bg-clip-text text-transparent">
-                They are living worlds.
+                {t.home.title2}
               </span>
             </h1>
-            <p className="mt-6 max-w-2xl text-base leading-8 text-fg-muted sm:text-lg">
-              SYMBIO turns every game server into an organism with pulse, mood, faction power,
-              stability, wipe countdown, community energy and player-fit recommendations.
-            </p>
+            <p className="mt-6 max-w-2xl text-base leading-8 text-fg-muted sm:text-lg">{t.home.subtitle}</p>
 
             <div className="mt-8 max-w-3xl rounded-[2rem] border border-white/10 bg-black/45 p-3 backdrop-blur-2xl">
               <div className="flex flex-col gap-3 lg:flex-row">
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search by world, faction, mood, playstyle..."
-                  className="h-14 rounded-[1.4rem] border-white/10 bg-white/8 text-base"
+                  placeholder={t.home.searchPlaceholder}
+                  className="h-14 rounded-[1.4rem] border-white/10 bg-[rgba(8,12,22,0.85)] text-base"
                 />
                 <Link href="/servers">
-                  <Button className="h-14 w-full rounded-[1.4rem] px-6 lg:w-auto">Open radar</Button>
+                  <Button className="h-14 w-full rounded-[1.4rem] px-6 lg:w-auto">{t.common.openRadar}</Button>
                 </Link>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -94,9 +95,9 @@ export default function HomePage() {
             </div>
 
             <div className="mt-8 grid max-w-3xl gap-3 sm:grid-cols-3">
-              <MetricCapsule label="living worlds" value="4.8K" hint="tracked organisms" />
-              <MetricCapsule label="community pulse" value="91%" hint="weighted activity" />
-              <MetricCapsule label="avg match fit" value="84%" hint={`${selected} recommendations`} />
+              <MetricCapsule label={t.home.livingWorlds} value="4.8K" hint={t.home.tracked} />
+              <MetricCapsule label={t.home.communityPulse} value="91%" hint={t.home.activityHint} />
+              <MetricCapsule label={t.home.matchFit} value="84%" hint={`${selected} — ${t.home.recommendations}`} />
             </div>
           </motion.div>
 
@@ -125,12 +126,9 @@ export default function HomePage() {
         <div className="holo-panel relative overflow-hidden rounded-[2rem] p-6">
           <div className="absolute inset-0 ecosystem-grid opacity-60" />
           <div className="relative">
-            <Badge tone="info">ecosystem radar</Badge>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight">World map is a living bioscan</h2>
-            <p className="mt-3 text-sm leading-7 text-fg-muted">
-              Servers orbit by energy, stability and player pressure. Hovering a world reveals hidden stats:
-              faction dominance, season state, wipe pressure and community velocity.
-            </p>
+            <Badge tone="info">{t.home.radarBadge}</Badge>
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight">{t.home.radarTitle}</h2>
+            <p className="mt-3 text-sm leading-7 text-fg-muted">{t.home.radarDesc}</p>
             <div className="relative mx-auto mt-8 aspect-square max-w-[440px] rounded-full border border-primary/20 bg-black/30">
               <div className="absolute inset-8 rounded-full border border-white/10" />
               <div className="absolute inset-20 rounded-full border border-white/10" />
@@ -163,11 +161,11 @@ export default function HomePage() {
         <div>
           <div className="mb-5 flex items-end justify-between gap-4">
             <div>
-              <Badge tone="success">featured organisms</Badge>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight">Recommended by playstyle</h2>
+              <Badge tone="success">{t.home.featured}</Badge>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight">{t.home.recommended}</h2>
             </div>
             <Link href="/servers" className="hidden text-sm text-primary hover:text-fg sm:block">
-              View all worlds →
+              {t.home.viewAll}
             </Link>
           </div>
           <div className="grid gap-4">
@@ -180,8 +178,8 @@ export default function HomePage() {
 
       <section className="grid gap-6 lg:grid-cols-3">
         <div className="holo-panel rounded-[2rem] p-6 lg:col-span-2">
-          <Badge tone="warning">season timeline</Badge>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight">Wipe pressure and event markers</h2>
+          <Badge tone="warning">{t.home.seasonBadge}</Badge>
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight">{t.home.seasonTitle}</h2>
           <div className="mt-8 space-y-5">
             {seasonEvents.map((event) => (
               <div key={event.label}>
@@ -198,8 +196,8 @@ export default function HomePage() {
         </div>
 
         <div className="holo-panel rounded-[2rem] p-6">
-          <Badge tone="info">community feed</Badge>
-          <h2 className="mt-4 text-2xl font-semibold tracking-tight">Live nervous system</h2>
+          <Badge tone="info">{t.home.feedBadge}</Badge>
+          <h2 className="mt-4 text-2xl font-semibold tracking-tight">{t.home.feedTitle}</h2>
           <div className="mt-5 space-y-3">
             {activityFeed.map((item) => (
               <div key={item} className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-fg-muted">
@@ -213,23 +211,18 @@ export default function HomePage() {
 
       <section className="banner-control overflow-hidden rounded-[2.5rem] border border-white/10 p-6 sm:p-10">
         <div className="max-w-2xl">
-          <Badge tone="info">owner command preview</Badge>
-          <h2 className="mt-4 text-4xl font-semibold tracking-tight">
-            Admin analytics that feel like a control room.
-          </h2>
-          <p className="mt-4 text-sm leading-7 text-fg-muted">
-            Track conversion, vote velocity, retention, activity heatmaps and faction pressure. Not a spreadsheet:
-            a command layer for growing competitive communities.
-          </p>
+          <Badge tone="info">{t.home.ownerBadge}</Badge>
+          <h2 className="mt-4 text-4xl font-semibold tracking-tight">{t.home.ownerTitle}</h2>
+          <p className="mt-4 text-sm leading-7 text-fg-muted">{t.home.ownerDesc}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/admin/dashboard">
-              <Button>Open command dashboard</Button>
+              <Button>{t.home.openDashboard}</Button>
             </Link>
             <Link href="/studio">
-              <Button variant="outline">Add server</Button>
+              <Button variant="outline">{t.home.addServer}</Button>
             </Link>
             <Link href="/profile">
-              <Button variant="secondary">Join community</Button>
+              <Button variant="secondary">{t.home.joinCommunity}</Button>
             </Link>
           </div>
         </div>

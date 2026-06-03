@@ -4,12 +4,14 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { useLocale } from "@/components/LocaleProvider";
 import { GlowCard } from "@/components/immersive/GlowCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
 export default function RegisterPage() {
+  const { t } = useLocale();
   const router = useRouter();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -28,10 +30,10 @@ export default function RegisterPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      if (!res.ok) throw new Error((await res.text()) || "Register failed");
+      if (!res.ok) throw new Error((await res.text()) || t.auth.registerFailed);
       router.push("/auth/login");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Register failed");
+      setError(err instanceof Error ? err.message : t.auth.registerFailed);
     } finally {
       setBusy(false);
     }
@@ -40,28 +42,24 @@ export default function RegisterPage() {
   return (
     <div className="mx-auto max-w-5xl pb-16">
       <div className="grid gap-8 lg:grid-cols-[0.9fr_1fr] lg:items-center">
-        <GlowCard className="p-6 sm:p-8 order-2 lg:order-1">
+        <GlowCard className="order-2 p-6 sm:p-8 lg:order-1">
           <div className="flex items-center justify-between gap-2">
-            <h1 className="text-2xl font-semibold">Create account</h1>
-            <Badge tone="info">Creator</Badge>
+            <h1 className="text-2xl font-semibold">{t.auth.register}</h1>
+            <Badge tone="info">{t.auth.creator}</Badge>
           </div>
-          <p className="mt-1 text-sm text-fg-muted">Join the creator economy</p>
+          <p className="mt-1 text-sm text-fg-muted">{t.auth.joinEconomy}</p>
 
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
             <div>
-              <label className="text-xs text-fg-muted">Email</label>
+              <label className="text-xs text-fg-muted">{t.auth.email}</label>
               <div className="mt-2">
                 <Input value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
             </div>
             <div>
-              <label className="text-xs text-fg-muted">Password</label>
+              <label className="text-xs text-fg-muted">{t.auth.password}</label>
               <div className="mt-2">
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+                <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
               </div>
             </div>
 
@@ -73,31 +71,23 @@ export default function RegisterPage() {
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <Button type="submit" isLoading={busy}>
-                Create account
+                {t.auth.submitRegister}
               </Button>
               <Link href="/auth/login" className="text-sm text-fg-muted hover:text-fg">
-                Sign in →
+                {t.auth.signInLink}
               </Link>
             </div>
-
-            <p className="text-xs text-fg-muted font-mono">{apiUrl}/auth/register</p>
           </form>
         </GlowCard>
 
-        <motion.div
-          initial={{ opacity: 0, x: 16 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="order-1 lg:order-2"
-        >
-          <Badge tone="success">Creator onboarding</Badge>
+        <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="order-1 lg:order-2">
+          <Badge tone="success">{t.auth.creatorBadge}</Badge>
           <h2 className="mt-4 text-4xl font-semibold tracking-tight">
-            Publish. <span className="text-gradient">Earn.</span> Grow.
+            {t.auth.creatorTitle} <span className="text-gradient">{t.auth.creatorTitleAccent}</span>
           </h2>
-          <p className="mt-4 max-w-md text-sm leading-7 text-fg-muted">
-            Upload mods, manage versions, track analytics and connect with server communities.
-          </p>
+          <p className="mt-4 max-w-md text-sm leading-7 text-fg-muted">{t.auth.creatorDesc}</p>
           <Link href="/studio" className="mt-6 inline-block">
-            <Button variant="outline">Open Creator Studio</Button>
+            <Button variant="outline">{t.auth.openStudio}</Button>
           </Link>
         </motion.div>
       </div>

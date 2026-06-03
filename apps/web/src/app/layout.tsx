@@ -1,13 +1,13 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { ThemeProvider } from "next-themes";
 import { Shell } from "@/components/Shell";
 import { UiModeProvider } from "@/components/UiModeProvider";
+import { LocaleProvider } from "@/components/LocaleProvider";
 
 export const metadata: Metadata = {
-  title: "SYMBIO — Living Gaming Ecosystem",
+  title: "SYMBIO — экосистема игровых серверов",
   description:
-    "Premium immersive gaming ecosystem for living server worlds, player recommendations and owner analytics.",
+    "Мониторинг серверов, проекты сообществ, рейтинги и кабинет владельца — премиальная игровая экосистема SYMBIO.",
   icons: {
     icon: "/symbio-logo.png",
     shortcut: "/symbio-logo.png",
@@ -21,13 +21,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="ru" className="dark" suppressHydrationWarning>
       <body className="antialiased">
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <LocaleProvider>
           <UiModeProvider>
             <Shell>{children}</Shell>
           </UiModeProvider>
-        </ThemeProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

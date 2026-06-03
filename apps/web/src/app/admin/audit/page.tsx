@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { useLocale } from "@/components/LocaleProvider";
 import { GlowCard } from "@/components/immersive/GlowCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -19,6 +20,7 @@ type AuditEvent = {
 };
 
 export default function AuditPage() {
+  const { t } = useLocale();
   const router = useRouter();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
   const [events, setEvents] = React.useState<AuditEvent[]>([]);
@@ -34,14 +36,32 @@ export default function AuditPage() {
         router.push("/auth/login");
         return;
       }
-      const res = await fetch(`${apiUrl}/audit/events?limit=50`, {
+      const res = await fetch(`${apiUrl}/admin/audit?limit=50`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
       });
       if (!res.ok) throw new Error(await res.text());
-      setEvents(await res.json());
+      const data = await res.json();
+      setEvents(
+        (data.items ?? []).map((ev: {
+          id: string;
+          actor_user_id: string | null;
+          action: string;
+          entity_type: string;
+          entity_id: string | null;
+          meta: Record<string, unknown> | null;
+          created_at: string;
+        }) => ({
+          id: ev.id,
+          actor: ev.actor_user_id,
+          action: ev.action,
+          target: ev.entity_type ? `${ev.entity_type}:${ev.entity_id ?? ""}` : null,
+          details: ev.meta,
+          created_at: ev.created_at,
+        }))
+      );
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed to load");
+      setError(e instanceof Error ? e.message : "Error");
     } finally {
       setLoading(false);
     }
@@ -58,16 +78,14 @@ export default function AuditPage() {
           <span className="text-gradient font-semibold tracking-[0.12em]">AUDIT</span>
         </Badge>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight">
-          Audit <span className="text-gradient">console</span>
+          {t.admin.auditTitle} <span className="text-gradient">{t.admin.auditTitleAccent}</span>
         </h1>
-        <p className="mt-2 text-sm text-fg-muted">
-          Observability: lifecycle events and admin actions.
-        </p>
+        <p className="mt-2 text-sm text-fg-muted">{t.admin.auditSubtitle}</p>
       </motion.div>
 
       <div className="flex flex-wrap gap-2">
         <Button variant="secondary" onClick={load} disabled={loading}>
-          Refresh
+          {t.common.refresh}
         </Button>
         <Button
           variant="ghost"
@@ -76,7 +94,7 @@ export default function AuditPage() {
             router.push("/auth/login");
           }}
         >
-          Sign out
+          {t.nav.signOut}
         </Button>
       </div>
 
@@ -89,8 +107,8 @@ export default function AuditPage() {
       ) : null}
 
       <GlowCard className="overflow-hidden p-0">
-        <div className="border-b border-white/10 px-5 py-4 flex items-center justify-between">
-          <SectionTitle title="Latest events" subtitle="Real-time audit stream" />
+        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+          <SectionTitle title={t.admin.latestEvents} subtitle={t.admin.stream} />
           <Badge tone="info">{events.length}</Badge>
         </div>
 
@@ -102,7 +120,7 @@ export default function AuditPage() {
               ))}
             </div>
           ) : events.length === 0 ? (
-            <p className="text-sm text-fg-muted py-8 text-center">No events yet.</p>
+            <p className="py-8 text-center text-sm text-fg-muted">{t.admin.noEvents}</p>
           ) : (
             <div className="space-y-3">
               {events.map((ev, i) => (
@@ -115,25 +133,18 @@ export default function AuditPage() {
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <Badge tone="info">{ev.action}</Badge>
-                    <span className="text-xs text-fg-muted">
-                      {new Date(ev.created_at).toLocaleString()}
-                    </span>
+                    <span className="text-xs text-fg-muted">{new Date(ev.created_at).toLocaleString()}</span>
                   </div>
                   <div className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
                     <div>
-                      <span className="text-fg-muted">Actor: </span>
+                      <span className="text-fg-muted">{t.admin.actor}: </span>
                       <span className="text-fg">{ev.actor || "—"}</span>
                     </div>
                     <div>
-                      <span className="text-fg-muted">Target: </span>
+                      <span className="text-fg-muted">{t.admin.target}: </span>
                       <span className="text-fg">{ev.target || "—"}</span>
                     </div>
                   </div>
-                  {ev.details ? (
-                    <pre className="mt-3 max-h-32 overflow-auto rounded-xl border border-white/8 bg-black/30 p-3 text-xs text-fg-muted">
-                      {JSON.stringify(ev.details, null, 2)}
-                    </pre>
-                  ) : null}
                 </motion.div>
               ))}
             </div>

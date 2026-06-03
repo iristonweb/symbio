@@ -46,13 +46,20 @@ uvicorn app.main:app --reload --port 8000
 
 API endpoints:
 - `GET /health`
-- `POST /auth/register`
-- `POST /auth/login`
-- `GET /servers` (freshness gate: last snapshot within X minutes)
+- `POST /auth/register` / `POST /auth/login`
+- `GET /games` / `GET /games/{slug}`
+- `GET /projects` / `GET /projects/{slug}` / `POST /projects`
+- `GET /servers` / `GET /servers/{id}` / `POST /servers` / `POST /servers/claim`
+- `GET /articles` / `GET /articles/{slug}`
+- `GET /contests` / `POST /contests/{id}/join`
+- `GET /billing/plans` / `GET /billing/wallet` / `POST /billing/checkout` / `POST /billing/promotions`
+- `GET /search?q=...&index=servers|games|projects|articles`
+- `POST /admin/imports/wargm/dry-run` / `POST /admin/imports/wargm/run` (admin)
 - `GET /admin/audit` (admin only)
 - `POST /events/track`
-- `GET /storage/presign-upload`
-- `GET /storage/presign-download`
+- `GET /storage/presign-upload` / `GET /storage/presign-download`
+
+Web routes: `/games`, `/projects`, `/servers`, `/news`, `/guides`, `/promocodes`, `/contests`, `/studio`, `/billing`, `/admin/imports`
 
 ## 3) Run Web (Next.js)
 In a new terminal:

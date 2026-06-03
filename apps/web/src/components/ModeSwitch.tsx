@@ -2,10 +2,12 @@
 
 import * as React from "react";
 import { useUiMode } from "@/components/UiModeProvider";
+import { useLocale } from "@/components/LocaleProvider";
 import { cn } from "@/lib/cn";
 
 export function ModeSwitch() {
   const { mode, setMode } = useUiMode();
+  const { t } = useLocale();
 
   return (
     <div className="inline-flex items-center rounded-2xl border border-white/10 bg-white/5 p-1 backdrop-blur-xl">
@@ -20,7 +22,7 @@ export function ModeSwitch() {
         )}
         aria-pressed={mode === "discover"}
       >
-        Discover
+        {t.mode.discover}
       </button>
       <button
         type="button"
@@ -33,7 +35,7 @@ export function ModeSwitch() {
         )}
         aria-pressed={mode === "expert"}
       >
-        Expert
+        {t.mode.expert}
       </button>
     </div>
   );

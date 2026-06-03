@@ -3,9 +3,10 @@ import time
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
-from app.db.session import engine, AsyncSessionLocal
+from app.db.session import engine, SessionLocal
 from app.db.base import Base
-from app.db.crud.servers import seed_demo_server
+import app.db.models  # noqa: F401 — register all models
+from app.db.seed_platform import seed_platform
 
 
 async def _wait_for_db(timeout: float = 30.0) -> None:
@@ -47,8 +48,8 @@ async def init_db() -> None:
     )
 
   # Seed minimal demo data (idempotent).
-  async with AsyncSessionLocal() as session:
-    await seed_demo_server(session)
+  async with SessionLocal() as session:
+    await seed_platform(session)
     await session.commit()
 
 

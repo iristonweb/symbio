@@ -25,19 +25,8 @@
   --my: 40%;
 }
 
-.light {
-  --bg: 246 248 252;
-  --panel: 255 255 255;
-  --fg: 11 16 32;
-  --fg-muted: 88 102 120;
-  --primary: 0 191 165;
-  --accent: 90 168 0;
-  --gold: 200 150 40;
-  --violet: 90 70 200;
-  --surface: 255 255 255;
-  --border-alpha: 0.1;
-  --card-alpha: 0.06;
-  --glow: 0 191 165;
+html {
+  color-scheme: dark;
 }
 
 * {
