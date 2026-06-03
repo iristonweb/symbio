@@ -18,7 +18,8 @@ type LocaleContextValue = {
 
 const LocaleContext = React.createContext<LocaleContextValue | null>(null);
 
-const STORAGE_KEY = "symbio-locale";
+const STORAGE_KEY = "symbio-locale-v2";
+const LEGACY_STORAGE_KEY = "symbio-locale";
 
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = React.useState<Locale>(defaultLocale);
@@ -27,7 +28,10 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     const stored = localStorage.getItem(STORAGE_KEY) as Locale | null;
     if (stored && locales.includes(stored)) {
       setLocaleState(stored);
+      return;
     }
+    // Reset the old key so previous "en" sessions do not override the Russian default.
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
   }, []);
 
   React.useEffect(() => {
